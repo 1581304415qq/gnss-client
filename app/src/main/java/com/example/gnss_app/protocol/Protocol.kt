@@ -1,4 +1,4 @@
-package com.example.gnss_app.network.protocol
+package com.example.gnss_app.protocol
 
 import android.util.Log
 import com.example.gnss_app.network.util.readInt
@@ -10,7 +10,7 @@ import kotlin.math.pow
 open class Protocol {
     var tailing: ByteArray = ByteArray(0)
     var body: ByteArray = ByteArray(0)
-    val head = ProtocolHead(service = 0u, protocol = 0u, dataLength = 0u)
+    val head = ProtocolHead(service = 0u, dataLength = 0u)
 
     fun reset() {
         tailing = ByteArray(0)
@@ -32,7 +32,14 @@ open class Protocol {
         }
         return frames
     }
-
+    open fun encode(): ByteArray {
+        if (body.isNotEmpty()) {
+            if (body.size > MaxDataLength) throw Error("data size is beyond max")
+            head.dataLength = body.size.toUInt()
+            return head.toByteArray() + body
+        }
+        return head.toByteArray()
+    }
     fun decodeGetSingleFrame(ba: ByteArray): Frame<ProtocolHead>? {
         var frame: Frame<ProtocolHead>? = null
         watch(ba)
@@ -56,8 +63,7 @@ open class Protocol {
                 |ba size: ${ba.size} 
                 |ba len is out: ${ba.size > Int.MAX_VALUE}
                 |head data length: ${head.dataLength}
-                |head service: ${head.service} 
-                |head protocol: ${head.protocol}""".trimMargin()
+                |head service: ${head.service}""".trimMargin()
         )
     }
 
@@ -66,8 +72,7 @@ open class Protocol {
             "Protocol watch ",
             """head state :
                 |head data length: ${head.dataLength}
-                |head service: ${head.service} 
-                |head protocol: ${head.protocol}""".trimMargin()
+                |head service: ${head.service}""".trimMargin()
         )
         if (head.dataLength > Int.MAX_VALUE.toUInt())
             throw Exception("head data length out Int Max Value")
@@ -96,7 +101,6 @@ open class Protocol {
         val uba = ba.toUByteArray()
         with(head) {
             service = uba.readInt16(op + 3).toUShort()
-            protocol = uba.readInt16(op + 5).toUShort()
             dataLength = uba.readInt(op + 7)
         }
         watchHead(head)
@@ -104,14 +108,6 @@ open class Protocol {
     }
 
     private val MaxDataLength = 2.0.pow(32.0) - 1 //UInt.MAX_VALUE
-    open fun encode(): ByteArray {
-        if (body.isNotEmpty()) {
-            if (body.size > MaxDataLength) throw Error("data size is beyond max")
-            head.dataLength = body.size.toUInt()
-            return head.toByteArray() + body
-        }
-        return head.toByteArray()
-    }
 
     data class ProtocolHead(
         /**
@@ -127,10 +123,6 @@ open class Protocol {
          */
         var service: UShort,
         /**
-         * 服务下的指定处理方法 长度2 byte
-         */
-        var protocol: UShort,
-        /**
          * 数据长度 长度4 byte
          */
         var dataLength: UInt,
@@ -140,12 +132,10 @@ open class Protocol {
             (magic / 256u).toByte(), magic.toByte(),
             version.toByte(),
             (service / 256u).toByte(), service.toByte(),
-            (protocol / 256u).toByte(), protocol.toByte(),
         ) + dataLength.toByteArray()
 
         fun clear() {
             service = 0u
-            protocol = 0u
             dataLength = 0u
         }
 

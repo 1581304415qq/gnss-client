@@ -1,10 +1,10 @@
 package com.example.gnss_app.network
 
 import android.util.Log
-import com.example.gnss_app.network.protocol.Protocol.*
+import com.example.gnss_app.protocol.Protocol.*
 import com.example.gnss_app.network.constants.*
-import com.example.gnss_app.network.protocol.Frame
-import com.example.gnss_app.network.protocol.Protocol
+import com.example.gnss_app.protocol.Frame
+import com.example.gnss_app.protocol.Protocol
 import com.viva.libs.event.EventDispatcher
 import com.viva.libs.event.IEventDispatcher
 import com.viva.libs.net.Net
@@ -96,7 +96,7 @@ class VivaClient private constructor(
             val frame = frames.removeFirstOrNull() ?: return
             Log.d(
                 "VivaClient",
-                "frame body size: ${frame.body.size} service: ${frame.head.service} protocol: ${frame.head.protocol}"
+                "frame body size: ${frame.body.size} service: ${frame.head.service}}"
             )
             when (frame.head.service) {
                 VivaServiceID.HEART -> heartHandle(frame)

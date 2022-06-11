@@ -16,53 +16,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.gnss_app.ui.pages.setting.SettingViewModel
 import com.example.gnss_app.ui.theme.GNSS_APPTheme
 import com.example.gnss_app.utils.toastShow
 
 @Composable
-fun SettingPage() {
-
+fun SettingPage(navController: NavController,viewModel: SettingViewModel) {
     Column {
         Button(onClick = { /*TODO*/ }) {
             Text("打开蓝牙")
         }
     }
-}
-@Composable
-fun OpenBlueTooth() {
-    val context = LocalContext.current
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult(),
-        onResult = {
-            when (it.resultCode) {
-                ComponentActivity.RESULT_OK -> {
-                    toastShow(context, msg = "bluetooth is ready")
-                }
-                else ->
-                    toastShow(context, msg = "cant not turn on bluetooth")
-            }
-        })
-    Button(onClick = { launcher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)) }) {
-        Text(text = "打开蓝牙")
-    }
-}
-
-
-
-@Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
-    Button(onClick = { /*TODO*/ }) {
-        Text(text = "switch")
-    }
-    var text by remember { mutableStateOf("") }
-    BasicTextField(
-        value = text,
-        onValueChange = { newText ->
-            text = newText
-        }
-    )
 }
 
 @Composable
@@ -250,11 +215,14 @@ fun NtripGreeting(name: String) {
         }
     }
 }
-
+@Preview
 @Composable
 fun SettingPreview() {
     GNSS_APPTheme {
         Column(Modifier.padding(10.dp)) {
+            NtripGreeting(name = "ntrip")
+            SocketGreeting(name = "socket")
+            GpsGreeting(name = "gps")
         }
     }
 }

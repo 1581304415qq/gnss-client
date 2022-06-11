@@ -1,4 +1,4 @@
-package com.example.gnss_app.network.protocol
+package com.example.gnss_app.protocol
 
 @ExperimentalUnsignedTypes
 data class Frame<T: IProtocolHead>(
