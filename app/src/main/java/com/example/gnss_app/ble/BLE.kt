@@ -127,6 +127,7 @@ object BLE : EventDispatcher<BLE_EVENT_TYPE, BleEvent<*>>() {
                     BLE_EVENT_TYPE.ON_CONNECT,
                     BleEvent.Success(newState)
                 )
+                gatt.discoverServices()
             } else if (status == BluetoothGatt.GATT_SUCCESS && newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Log.v(TAG, "Connection State: 2");
                 dispatch(
