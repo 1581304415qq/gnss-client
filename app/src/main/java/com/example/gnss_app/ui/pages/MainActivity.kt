@@ -111,10 +111,10 @@ private fun RequestPermission(callBack: (list: List<String>) -> Unit) {
                 try {
                     if (!it[key]!!)
                         permissionTemp.add(key)
-                    toastShow(
-                        context, TAG,
-                        "requestPermissions $key ${it[key]}",
-                    )
+//                    toastShow(
+//                        context, TAG,
+//                        "requestPermissions $key ${it[key]}",
+//                    )
                 } catch (e: Exception) {
                     toastShow(
                         context, TAG,

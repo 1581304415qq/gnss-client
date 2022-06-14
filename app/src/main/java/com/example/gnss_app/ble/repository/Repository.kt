@@ -6,59 +6,36 @@ import android.content.Context
 import com.example.gnss_app.ble.BLE
 import com.example.gnss_app.ble.BLE_EVENT_TYPE
 import com.example.gnss_app.ble.BleEvent
-import com.example.gnss_app.ble.model.Wireless
-import com.google.gson.Gson
+import com.example.gnss_app.ble.contance.*
+import com.example.gnss_app.ble.model.AppInfo
+import com.example.gnss_app.ble.model.Heart
+import com.example.gnss_app.ble.util.getMin
+import com.example.gnss_app.protocol.Frame
+import com.example.gnss_app.protocol.IData
+import com.example.gnss_app.protocol.Protocol
 import com.viva.libs.event.EventDispatcher
+import com.viva.libs.utils.CircleByteBuffer
 import com.viva.libs.utils.Log
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.util.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
-import kotlin.math.min
 
-object Repository : EventDispatcher<EventType, Event<*>>() {
+@OptIn(ExperimentalUnsignedTypes::class)
+object Repository : EventDispatcher<EventType, Event>() {
     val TAG = "BleRepository"
 
-    private val COMMAND_WIFI_SCAN = byteArrayOf(0x01)
-    private val COMMAND_WIFI_CONNECT = byteArrayOf(0x02)
-    private val COMMAND_WIFI_SET_CONFIG = byteArrayOf(0x03)
-    private val COMMAND_WIFI_GET_CONFIG = byteArrayOf(0x04)
-
-    private val COMMAND_CAMERA_START = byteArrayOf(0x01)
-    private val COMMAND_CAMERA_STOP = byteArrayOf(0x02)
-    private val COMMAND_CAMERA_RESET = byteArrayOf(0x03)
-    private val COMMAND_CAMERA_CAPTURE = byteArrayOf(0x04)
-    private val COMMAND_CAMERA_GET_CONFIG = byteArrayOf(0x05)
-    private val COMMAND_CAMERA_SET_CONFIG = byteArrayOf(0x06)
-    private val COMMAND_CAMERA_FLASH_OPEN = byteArrayOf(0x07)
-    private val COMMAND_CAMERA_FLASH_CLOSE = byteArrayOf(0x08)
-    private val COMMAND_CAMERA_LASER_OPEN = byteArrayOf(0x09)
-    private val COMMAND_CAMERA_LASER_CLOSE = byteArrayOf(0x0A)
-    private val COMMAND_CAMERA_SET_MODE = byteArrayOf(0x0B)
-
-
-    private val COMMAND_CAMERA_SET_FRAMESIZE = byteArrayOf(0x21)
-    private val COMMAND_CAMERA_SET_SPEFFECT = byteArrayOf(0x22)
-    private val COMMAND_CAMERA_SET_WHITEBALANCE = byteArrayOf(0x23)
-    private val COMMAND_CAMERA_SET_SATURATION = byteArrayOf(0x24)
-    private val COMMAND_CAMERA_SET_BRIGHTNESS = byteArrayOf(0x25)
-    private val COMMAND_CAMERA_SET_QUALITY = byteArrayOf(0x26)
-    private val COMMAND_CAMERA_INTERVAL = byteArrayOf(0x27)
-    private val COMMAND_CAMERA_LASERABLE = byteArrayOf(0x28)
-    private val COMMAND_CAMERA_FLASHABLE = byteArrayOf(0x29)
-
-    private val SYSTEM_SLEEP_MODE_CHANGE = byteArrayOf(0x41)
-
-    private const val WIFI_SERVICE_UUID = "0000281a-0000-1000-8000-00805f9b34fb"
-    private const val WIFI_COMMAND_UUID = "00002A68-0000-1000-8000-00805f9b34fb"
-    private const val WIFI_WRITE_UUID = "00002A78-0000-1000-8000-00805f9b34fb"
-    private const val WIFI_SCAN_UUID = "00002A08-0000-1000-8000-00805f9b34fb"
-    private const val WIFI_CONFIG_UUID = "00002a6e-0000-1000-8000-00805f9b34fb"
-    private const val CAMERA_SERVICE_UUID = "0000181a-0000-1000-8000-00805f9b34fb"
-    private const val CAMERA_READ_UUID = "00002a6e-0000-1000-8000-00805f9b34fb"
-    private const val CAMERA_COMMAND_UUID = "00002a68-0000-1000-8000-00805f9b34fb"
+    private const val CASTOR_BT_SERVICE_UUID = "00002000-0000-1000-8000-00805f9b34fb"
+    private const val CASTOR_BT_WRITE_UUID = "00002000-0000-1000-8000-00805f9b34fb"
+    private const val CASTOR_BT_READ_UUID = "00002001-0000-1000-8000-00805f9b34fb"
 
     init {
         BLE.on(BLE_EVENT_TYPE.ON_CHARACTERISTIC_CHANGED, ::characteristicChangeHandle)
+        BLE.once(BLE_EVENT_TYPE.ON_SERVICES_DISCOVERED) {
+            startHeart()
+        }
     }
 
     override fun destroy() {
@@ -66,17 +43,68 @@ object Repository : EventDispatcher<EventType, Event<*>>() {
         BLE.off(BLE_EVENT_TYPE.ON_CHARACTERISTIC_CHANGED, ::characteristicChangeHandle)
     }
 
+    /**
+     * 蓝牙串口的协议与数据缓冲
+     */
+    private val protocol = Protocol()
+    private var buffer: CircleByteBuffer = CircleByteBuffer(10_240)
+
+    /**
+     * 接收BLE数据，存入缓存区带解析
+     */
     private fun characteristicChangeHandle(e: BleEvent<*>) {
         e as BleEvent.CharacteristicChange
-        if (e.uuidS == BLE.uuid(WIFI_SERVICE_UUID) && BLE.uuid(WIFI_SCAN_UUID) == e.uuidC) {
-            val wireless = Gson().fromJson(String(e.data!!, Charsets.UTF_8), Wireless::class.java)
-            dispatch(
-                EventType.ON_WIFI_SCAN_RESULT,
-                Event.WifiScanResult(wireless)
-            )
-        } else if (e.uuidS == BLE.uuid(WIFI_SERVICE_UUID) && BLE.uuid(WIFI_CONFIG_UUID) == e.uuidC) {
+        //  模拟蓝牙串口数据接收
+        //  CASTOR_BT_SERVICE_UUID 服务
+        //  CASTOR_BT_READ_UUID 数据接收服务
+        if (e.uuidS == BLE.uuid(CASTOR_BT_SERVICE_UUID) && BLE.uuid(CASTOR_BT_READ_UUID) == e.uuidC) {
+            buffer.puts(e.data!!)
+        }
+        // 其他当服务数据接收解析
+        else if (e.uuidS == BLE.uuid(CASTOR_BT_SERVICE_UUID) && BLE.uuid(CASTOR_BT_WRITE_UUID) == e.uuidC) {
             Log.i(TAG, "get wifi config :${String(e.data!!)}")
         }
+    }
+
+    /**
+     * 协议解析，再用消息发送出去
+     */
+    private fun parseData() {
+        var tmp: ByteArray
+        while (true) {
+            val len = buffer.getLen()
+            if (len >= Protocol.HEAD_LENGTH) {
+                tmp = buffer.peeks(getMin(1024, len))
+                val (dataLen, frame) = protocol.decode(tmp)
+                if (dataLen > 0) {
+                    buffer.gets(dataLen)
+                    dispatchEvent(frame!!)
+                }
+            }
+        }
+    }
+
+    private fun dispatchEvent(frame: Frame<Protocol.ProtocolHead>) {
+        when (frame.head.service) {
+            ProtocolID.APP_INFO -> {
+
+            }
+            else -> {}
+        }
+    }
+
+    private fun sendMsg(service: UShort, data: IData) {
+        val characteristic = BLE.getCharacteristic(CASTOR_BT_SERVICE_UUID, CASTOR_BT_WRITE_UUID)
+        BLE.write(characteristic, protocol.encode(service, data))
+    }
+
+    private fun startHeart() {
+        val heart = Heart()
+        Timer().schedule(object : TimerTask() {
+            override fun run() {
+                sendMsg(ProtocolID.SERVICE_HEART, heart)
+            }
+        }, 0, 10_000)
     }
 
     suspend fun scan(bluetoothAdapter: BluetoothAdapter): MutableList<ScanResult> =
@@ -88,185 +116,68 @@ object Repository : EventDispatcher<EventType, Event<*>>() {
             BLE.startScan(bluetoothAdapter)
         }
 
-    suspend fun configWifi(bytes: ByteArray) {
-        try {
-            var characteristic = BLE.getCharacteristic(WIFI_SERVICE_UUID, WIFI_COMMAND_UUID)
-            BLE.write(characteristic, COMMAND_WIFI_SET_CONFIG)
-            characteristic = BLE.getCharacteristic(WIFI_SERVICE_UUID, WIFI_WRITE_UUID)
-            Log.i("BleRepository", "$characteristic ${String(bytes)}")
-            for (b in bytes.indices step 20) {
-                delay(200)
-                BLE.write(
-                    characteristic,
-                    bytes.copyOfRange(b, min(b + 20, bytes.size))
-                )
-                delay(200)
-            }
-            BLE.write(characteristic, "\r\n".toByteArray())
-        } catch (e: Exception) {
+    suspend fun connect(context: Context, id: Int): Boolean =
+        suspendCoroutine {
+            BLE.once(BLE_EVENT_TYPE.ON_CONNECT) { event ->
+                when (event) {
+                    is BleEvent.Success -> {
+                        it.resume(true)
+                    }
+                    is BleEvent.Error -> {
 
+                    }
+                    else -> {}
+                }
+            }
+
+            BLE.connect(context, BLE.devices[id].device)
         }
-    }
 
-    suspend fun wifiScan(): Wireless = suspendCoroutine {
-        try {
-            val characteristic = BLE.getCharacteristic(WIFI_SERVICE_UUID, WIFI_COMMAND_UUID)
-            Log.i("BleRepository", "$characteristic")
-            once(EventType.ON_WIFI_SCAN_RESULT) { e ->
-                e as Event.WifiScanResult
-                it.resume(e.data!!)
+
+    suspend fun disconnect(): Boolean =
+        suspendCoroutine {
+            BLE.once(BLE_EVENT_TYPE.ON_DISCONNECT) { e ->
+                when (e) {
+                    is BleEvent.Success -> it.resume(true)
+                    is BleEvent.Error -> {}
+                    else -> {}
+                }
             }
-            BLE.write(characteristic, COMMAND_WIFI_SCAN)
+            BLE.disconnect()
+        }
+
+    suspend fun readAppInfo(appInfo: AppInfo): AppInfo = suspendCoroutine {
+        try {
+            once(EventType.ON_READ_APP_INFO) { e ->
+                when (e) {
+                    is Event.Success -> {
+                        appInfo.body = e.data!!
+                        it.resume(appInfo)
+                    }
+                    is Event.Error -> {
+
+                    }
+                }
+            }
+            sendMsg(ProtocolID.APP_INFO, appInfo)
         } catch (e: Exception) {
             throw e
         }
     }
 
-    suspend fun wifiConnect(): Wireless = suspendCoroutine {
-        try {
-            val characteristic = BLE.getCharacteristic(WIFI_SERVICE_UUID, WIFI_COMMAND_UUID)
-            Log.i("BleRepository", "$characteristic")
-            BLE.write(characteristic, COMMAND_WIFI_CONNECT)
-        } catch (e: Exception) {
-
-        }
-    }
-
-    suspend fun connect(context: Context, id: Int): Boolean =
-        suspendCoroutine {
-            BLE.once(BLE_EVENT_TYPE.ON_CONNECT) { event ->
-                val res = event as BleEvent.State
-                it.resume(res.result)
-            }
-            BLE.connect(context, BLE.devices[id])
-        }
-
-    suspend fun readConfig(): String =
+    suspend fun readConfig(castorConfig: IData): String =
         suspendCoroutine {
             try {
-                BLE.once(BLE_EVENT_TYPE.ON_CHARACTERISTIC_CHANGED) { e ->
-                    e as BleEvent.CharacteristicChange
+                once(EventType.ON_READ_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {}
+                        is Event.Error -> {}
+                    }
                     it.resume(String(e.data!!))
                 }
-                val characteristic = BLE.getCharacteristic(WIFI_SERVICE_UUID, WIFI_COMMAND_UUID)
-                BLE.write(characteristic, COMMAND_WIFI_GET_CONFIG)
+                sendMsg(ProtocolID.SERVICE_READ_CONFIG, castorConfig)
             } catch (e: Exception) {
 
             }
         }
-
-    fun startCameraService() {
-        val characteristic = BLE.getCharacteristic(CAMERA_SERVICE_UUID, CAMERA_COMMAND_UUID)
-        BLE.write(characteristic, COMMAND_CAMERA_START)
-    }
-
-    fun stopCameraService() {
-        val characteristic = BLE.getCharacteristic(CAMERA_SERVICE_UUID, CAMERA_COMMAND_UUID)
-        BLE.write(characteristic, COMMAND_CAMERA_STOP)
-    }
-
-    fun capture() {
-        val characteristic = BLE.getCharacteristic(CAMERA_SERVICE_UUID, CAMERA_COMMAND_UUID)
-        BLE.write(characteristic, COMMAND_CAMERA_CAPTURE)
-    }
-
-    fun getConfigCamera() {
-        val characteristic = BLE.getCharacteristic(CAMERA_SERVICE_UUID, CAMERA_COMMAND_UUID)
-        BLE.write(characteristic, COMMAND_CAMERA_GET_CONFIG)
-    }
-
-    suspend fun configCamera(bytes: ByteArray) {
-        try {
-            var characteristic = BLE.getCharacteristic(CAMERA_SERVICE_UUID, CAMERA_COMMAND_UUID)
-            BLE.write(characteristic, COMMAND_CAMERA_SET_CONFIG)
-            characteristic = BLE.getCharacteristic(CAMERA_SERVICE_UUID, CAMERA_READ_UUID)
-            Log.i("BleRepository", "$characteristic ${String(bytes)}")
-            for (b in bytes.indices step 20) {
-                delay(200)
-                BLE.write(
-                    characteristic,
-                    bytes.copyOfRange(b, min(b + 20, bytes.size))
-                )
-                delay(200)
-            }
-            BLE.write(characteristic, "\r\n".toByteArray())
-        } catch (e: Exception) {
-
-        }
-    }
-
-    fun led(state: Boolean) {
-        val characteristic = BLE.getCharacteristic(CAMERA_SERVICE_UUID, CAMERA_COMMAND_UUID)
-        if (state)
-            BLE.write(characteristic, COMMAND_CAMERA_FLASH_OPEN)
-        else
-            BLE.write(characteristic, COMMAND_CAMERA_FLASH_CLOSE)
-    }
-
-
-    fun setLaserState(state: Boolean) {
-        val characteristic = BLE.getCharacteristic(CAMERA_SERVICE_UUID, CAMERA_COMMAND_UUID)
-        if (state)
-            BLE.write(characteristic, COMMAND_CAMERA_LASER_OPEN)
-        else
-            BLE.write(characteristic, COMMAND_CAMERA_LASER_CLOSE)
-    }
-
-    fun setting() {
-        val characteristic = BLE.getCharacteristic(CAMERA_SERVICE_UUID, CAMERA_COMMAND_UUID)
-        BLE.write(characteristic, COMMAND_CAMERA_SET_CONFIG)
-    }
-
-    private suspend fun sendValueToService(service: ByteArray, bytes: ByteArray) {
-        Log.i(TAG, "$service $bytes")
-        try {
-            var characteristic =
-                BLE.getCharacteristic(CAMERA_SERVICE_UUID, CAMERA_COMMAND_UUID)
-            delay(200)
-            BLE.write(characteristic, service)
-            characteristic = BLE.getCharacteristic(WIFI_SERVICE_UUID, WIFI_WRITE_UUID)
-            delay(200)
-            BLE.write(characteristic, bytes)
-            delay(200)
-            BLE.write(characteristic, "\r\n".toByteArray())
-        } catch (e: Exception) {
-        }
-    }
-
-    suspend fun cameraQuality(bytes: ByteArray) {
-        sendValueToService(COMMAND_CAMERA_SET_QUALITY, bytes)
-    }
-
-    suspend fun cameraFramesize(bytes: ByteArray) {
-        sendValueToService(COMMAND_CAMERA_SET_FRAMESIZE, bytes)
-    }
-
-    suspend fun cameraBrightness(bytes: ByteArray) {
-        sendValueToService(COMMAND_CAMERA_SET_BRIGHTNESS, bytes)
-    }
-
-    suspend fun cameraSetLaser(bytes: ByteArray) {
-        sendValueToService(COMMAND_CAMERA_LASERABLE, bytes)
-    }
-
-    suspend fun cameraSetFlash(bytes: ByteArray) {
-        sendValueToService(COMMAND_CAMERA_FLASHABLE, bytes)
-    }
-
-    suspend fun cameraSaturation(bytes: ByteArray) {
-        sendValueToService(COMMAND_CAMERA_SET_SATURATION, bytes)
-    }
-
-    suspend fun cameraWhitebalance(bytes: ByteArray) {
-        sendValueToService(COMMAND_CAMERA_SET_WHITEBALANCE, bytes)
-    }
-
-    suspend fun cameraSpeffect(bytes: ByteArray) {
-        sendValueToService(COMMAND_CAMERA_SET_SPEFFECT, bytes)
-    }
-
-    suspend fun systemSleepModel(bytes: ByteArray) {
-        sendValueToService(SYSTEM_SLEEP_MODE_CHANGE, bytes)
-    }
-
 }

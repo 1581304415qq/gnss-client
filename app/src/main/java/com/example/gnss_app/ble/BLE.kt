@@ -8,12 +8,15 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import com.example.gnss_app.ble.util.*
+import com.example.gnss_app.protocol.Protocol
 import com.viva.libs.event.EventDispatcher
 import com.viva.libs.utils.CircleByteBuffer
 import java.util.*
 
 /**
  * enable -- scan -- discover -- disable
+ * 低功耗蓝牙对象，负责与底层ble设备扫描，连接，断开，发送，接收数据
+ * 只与ble设备通信。不负责数据的解析，打包。
  */
 
 @SuppressLint("MissingPermission")
@@ -26,8 +29,7 @@ object BLE : EventDispatcher<BLE_EVENT_TYPE, BleEvent<*>>() {
 
     var isConnected = false
     var state: STATUS = STATUS.UNABLE
-    var results = mutableListOf<ScanResult>()
-    var devices = mutableListOf<BluetoothDevice>()
+    var devices = mutableListOf<ScanResult>()
     var bluetoothGatt: BluetoothGatt? = null
     var currentCharacteristic: BluetoothGattCharacteristic? = null
 
@@ -36,11 +38,10 @@ object BLE : EventDispatcher<BLE_EVENT_TYPE, BleEvent<*>>() {
     }
 
     private fun deviceFound(result: ScanResult) {
-        val device = result.device
-        Log.v(TAG, "onScanResult: ${device.address} - ${device.name} ${result.rssi}")
-        if (!devices.contains(device)) {
-            results.add(result)
-            devices.add(device)
+        val tmp = devices.filter { it.device.address==result.device.address }
+        Log.v(TAG, "onScanResult: ${result.device.address} - ${result.device.name} ${result.rssi}")
+        if (tmp.isEmpty()) {
+            devices.add(result)
         }
     }
 
@@ -50,7 +51,7 @@ object BLE : EventDispatcher<BLE_EVENT_TYPE, BleEvent<*>>() {
             characteristic: BluetoothGattCharacteristic?,
             status: Int
         ) {
-            Log.i("BlueTooth onCharacteristicWrite", "${String(characteristic!!.value)}")
+            Log.i("BlueTooth onCharacteristicWrite", characteristic!!.value.toHexString())
         }
 
         override fun onCharacteristicRead(
@@ -124,13 +125,13 @@ object BLE : EventDispatcher<BLE_EVENT_TYPE, BleEvent<*>>() {
                 gatt.requestMtu(128)
                 dispatch(
                     BLE_EVENT_TYPE.ON_CONNECT,
-                    BleEvent.State(true)
+                    BleEvent.Success(newState)
                 )
             } else if (status == BluetoothGatt.GATT_SUCCESS && newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Log.v(TAG, "Connection State: 2");
                 dispatch(
                     BLE_EVENT_TYPE.ON_DISCONNECT,
-                    BleEvent.State(true)
+                    BleEvent.Success(newState)
                 )
             } else if (status != BluetoothGatt.GATT_SUCCESS) {
                 Log.v(TAG, "Connection State: 3");
@@ -138,7 +139,7 @@ object BLE : EventDispatcher<BLE_EVENT_TYPE, BleEvent<*>>() {
                 isConnected = false
                 dispatch(
                     BLE_EVENT_TYPE.ON_CONNECT,
-                    BleEvent.State(false)
+                    BleEvent.Success(newState)
                 )
             }
             dispatch(
@@ -207,13 +208,14 @@ object BLE : EventDispatcher<BLE_EVENT_TYPE, BleEvent<*>>() {
         val scanSettings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .build()
+        devices.clear()
         if (bluetoothAdapter.isEnabled) {
             log(msg = "start scan")
             val scanner = bluetoothAdapter.bluetoothLeScanner
             if (!scanning && scanner != null) {
                 handler.postDelayed(
                     {
-                        dispatch(BLE_EVENT_TYPE.ON_SCAN_STOP, BleEvent.BatchScanResults(results))
+                        dispatch(BLE_EVENT_TYPE.ON_SCAN_STOP, BleEvent.BatchScanResults(devices))
                         stopScan()
                     },
                     SCAN_PERIOD
@@ -263,7 +265,7 @@ object BLE : EventDispatcher<BLE_EVENT_TYPE, BleEvent<*>>() {
             }
             else -> Log.v(TAG, "Characteristic ${characteristic.uuid} cannot be written to")
         }
-        Log.i(TAG, String(payload))
+        Log.i(TAG, "ble write ${payload.toHexString()}")
         bluetoothGatt?.let { gatt ->
             characteristic.writeType = writeType
             characteristic.value = payload
@@ -294,32 +296,12 @@ object BLE : EventDispatcher<BLE_EVENT_TYPE, BleEvent<*>>() {
         }
     }
 
-    private val buffer = mutableMapOf<UUID, MutableMap<UUID, CircleByteBuffer>>()
     private fun onCharacteristicChangedHandle(uuidS: UUID, uuidC: UUID, value: ByteArray) {
-        Log.i(TAG, "val is /r/n ${value.contentEquals("\r\n".toByteArray())}")
-        if (!value.contentEquals("\r\n".toByteArray())) {
-            if (buffer[uuidS] == null) buffer[uuidS] = mutableMapOf()
-            if (buffer[uuidS]?.get(uuidC) == null)
-                buffer[uuidS]?.set(
-                    uuidC,
-                    CircleByteBuffer(100_000)
-                )
-            buffer[uuidS]!![uuidC]!!.puts(value)
-        } else {
-            try {
-                val data = buffer[uuidS]!![uuidC]!!.getAll()
-                Log.i(TAG, "receive bytes: ${String(data, Charsets.UTF_8)}")
-                dispatch(
-                    BLE_EVENT_TYPE.ON_CHARACTERISTIC_CHANGED,
-                    BleEvent.CharacteristicChange(uuidS, uuidC, data)
-                )
-            } catch (e: Exception) {
-                buffer[uuidS]!![uuidC]!!.clear()
-                return
-            }
-        }
+        dispatch(
+            BLE_EVENT_TYPE.ON_CHARACTERISTIC_CHANGED,
+            BleEvent.CharacteristicChange(uuidS, uuidC, value)
+        )
     }
-
     private fun log(tag: String = TAG, msg: String) = Log.v(tag, msg)
 }
 

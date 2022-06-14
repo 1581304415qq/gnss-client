@@ -20,6 +20,7 @@ enum class BLE_EVENT_TYPE {
 sealed class BleEvent<T>(val data: T?, val message: String?) {
 
     class Error(message: String) : BleEvent<Int>(null, message)
+    class Success(val value: Int) : BleEvent<Int>(null, null)
     class ScanFailed(code: Int) : BleEvent<Int>(null, code.toString())
     class ScanResult(data: android.bluetooth.le.ScanResult) :
         BleEvent<android.bluetooth.le.ScanResult>(data, null)
@@ -33,7 +34,6 @@ sealed class BleEvent<T>(val data: T?, val message: String?) {
     class CharacteristicChange(val uuidS: UUID, val uuidC: UUID,data: ByteArray) :
         BleEvent<ByteArray>(data, null)
 
-    class State(val result: Boolean) : BleEvent<Int>(null, null)
     class ConnectionStateChange(val status: Int, val newState: Int) :
         BleEvent<Int>(null, null)
 

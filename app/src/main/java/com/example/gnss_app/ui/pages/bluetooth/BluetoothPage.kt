@@ -7,25 +7,46 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.runtime.*
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.navigation.NavController
 import com.example.gnss_app.ui.theme.GNSS_APPTheme
 import com.example.gnss_app.utils.toastShow
 
 @Composable
 fun BluetoothPage(navController: NavController, viewModel: BluetoothViewModel) {
+    val context = LocalContext.current
+    val btIsEnable = remember {
+        mutableStateOf(viewModel.btAdapter.isEnabled)
+    }
     GNSS_APPTheme {
-        val btIsEnable = remember {
-            mutableStateOf(viewModel.btAdapter.isEnabled)
-        }
-        Column(Modifier.padding(10.dp)) {
-            Connect(viewModel.devices) { viewModel.connectDevice(it) }
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+        ) {
+            if (viewModel.status.value != BLE_CONNECT_STATUS.CONNECTED)
+                Connect(viewModel.devices) {
+                    viewModel.connectDevice(it) { ret ->
+                        if (ret) navController.navigate("SettingPage")
+                    }
+                    toastShow(context, "bluetooth page", "select $it")
+                }
+            else {
+                Button(onClick = {
+                    viewModel.disconnectDevice()
+                    viewModel.setStatus(BLE_CONNECT_STATUS.DISCONNECT)
+                }) {
+                    Text("断开连接")
+                }
+            }
             if (btIsEnable.value) {
                 Scan {
                     viewModel.bleScan()
@@ -70,16 +91,14 @@ fun Scan(function: () -> Unit) {
 
 @Composable
 fun Connect(list: LiveData<List<String>>, function: (i: Int) -> Unit) {
-    var select by remember { mutableStateOf(0) }
     var expanded by remember { mutableStateOf(false) }
-    Box {
-        TextButton(onClick = { expanded = true }) {
+    Box(Modifier.fillMaxWidth()) {
+        TextButton(onClick = {
+            expanded = list.value?.isNotEmpty() ?: false
+        }) {
             Text(text = "连接")
         }
         DropdownMenu(
-            modifier = Modifier
-                .width(100.dp)
-                .height(20.dp),
             expanded = expanded,
             onDismissRequest = {
                 expanded = false
@@ -87,9 +106,10 @@ fun Connect(list: LiveData<List<String>>, function: (i: Int) -> Unit) {
             list.value?.forEachIndexed { index, s ->
                 DropdownMenuItem(onClick = {
                     function(index)
-                    select = index
+                    expanded = false
                 }) {
-                    Text(text = s)
+                    Icon(imageVector = Icons.Default.Favorite, contentDescription = "")
+                    Text(text = s, modifier = Modifier.padding(start = 10.dp))
                 }
             }
         }
@@ -101,7 +121,7 @@ fun Connect(list: LiveData<List<String>>, function: (i: Int) -> Unit) {
 fun BluetoothPreview() {
     GNSS_APPTheme {
         Column(Modifier.padding(10.dp)) {
-//            Connect(listOf("1", "2", "3", "4")) {}
+            Connect(MutableLiveData(listOf("1", "2", "3", "4"))) {}
             Scan {}
         }
     }

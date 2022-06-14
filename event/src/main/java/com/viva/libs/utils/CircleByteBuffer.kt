@@ -66,4 +66,23 @@ class CircleByteBuffer(private val size: Int) {
         end = 0
     }
 
+    /**
+     * 查看环形缓存区内数据，但不取出
+     */
+    @Throws
+    fun peek(i: Int): Byte {
+        if (getLen() == 0)
+            throw Exception("out buffer")
+        return data[start + i]
+    }
+
+    /**
+     * 获取但不删除环形缓存区内数据
+     */
+    fun peeks(len: Int): ByteArray {
+        val bts = ByteArray(len)
+        for (i in 0 until len)
+            bts[i] = peek(i)
+        return bts
+    }
 }

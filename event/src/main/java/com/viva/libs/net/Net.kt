@@ -1,5 +1,8 @@
 package com.viva.libs.net
 
+/***
+ *
+ */
 import com.viva.libs.utils.CircleByteBuffer
 import com.viva.libs.utils.Log
 import java.io.*
@@ -14,7 +17,7 @@ abstract class Net(private val ip: String, private val port: Int) {
     protected var bufferOut: ByteArray? = null
     protected var bufferIn = CircleByteBuffer(BUFFER_SIZE)
 
-    open fun connect() {
+    fun connect() {
         try {
             socket = Socket(ip, port)
             socket!!.soTimeout = 20000  //设置连接超时限制
@@ -23,24 +26,29 @@ abstract class Net(private val ip: String, private val port: Int) {
             isConnect = true
             Log.v("Net", "connect server successful")
             onConnectSuccess()
-            while (isConnect) {
-                receive()
-                write()
-            }
-            stop()
-            onDisConnect()
         } catch (e: IOException) {
             onConnectFail(e)
         } finally {
 
         }
     }
-
     open fun stop() {
         isConnect = false
         bufferIn.clear()
         bufferOut = null
         close()
+    }
+
+    /**
+     * 接收 发送处理
+     * 子类应在连接成功后用一个线程来运行使用
+     * 如果断开连接 线程会退出
+     */
+    fun receiveAndSendHandler(){
+        while (isConnect) {
+            receive()
+            write()
+        }
     }
 
     protected open fun send(d: ByteArray) {
@@ -78,7 +86,6 @@ abstract class Net(private val ip: String, private val port: Int) {
                     | data free: ${bufferIn.getFree()}
                     | """.trimMargin()
                     )
-                    dataHandle()
                 }
             } catch (e: IOException) {
                 Log.v("Net", "接收错误")
@@ -89,7 +96,6 @@ abstract class Net(private val ip: String, private val port: Int) {
 
     private fun dataHandle() {
         unPackage()
-        frameHandle()
     }
 
     private fun close() {
@@ -104,7 +110,6 @@ abstract class Net(private val ip: String, private val port: Int) {
     }
 
     protected abstract fun unPackage()
-    protected abstract fun frameHandle()
     protected abstract fun onConnectSuccess()
     protected abstract fun onDisConnect()
 

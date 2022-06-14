@@ -1,8 +1,3 @@
-import android.bluetooth.BluetoothAdapter
-import android.content.Intent
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,21 +7,29 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.gnss_app.ui.pages.setting.SettingViewModel
 import com.example.gnss_app.ui.theme.GNSS_APPTheme
-import com.example.gnss_app.utils.toastShow
 
 @Composable
 fun SettingPage(navController: NavController,viewModel: SettingViewModel) {
-    Column {
-        Button(onClick = { /*TODO*/ }) {
-            Text("打开蓝牙")
+    Box(Modifier
+        .fillMaxWidth()
+        .fillMaxHeight()
+        .padding(10.dp)
+    ) {
+        Column {
+            Text("Setting")
+            Button(onClick = {
+                viewModel.performGetAppInfo()
+            }) {
+                Text("获取固件信息")
+            }
         }
+
     }
 }
 

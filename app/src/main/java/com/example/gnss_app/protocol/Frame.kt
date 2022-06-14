@@ -1,7 +1,7 @@
 package com.example.gnss_app.protocol
 
 @ExperimentalUnsignedTypes
-data class Frame<T: IProtocolHead>(
+data class Frame<T: IProtocol>(
     var head: T, //协议头
     var body: ByteArray, //协议体
 ) {

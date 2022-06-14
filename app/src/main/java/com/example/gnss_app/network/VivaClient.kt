@@ -1,6 +1,8 @@
 package com.example.gnss_app.network
 
 import android.util.Log
+import com.example.gnss_app.ble.repository.Repository
+import com.example.gnss_app.ble.util.getMin
 import com.example.gnss_app.protocol.Protocol.*
 import com.example.gnss_app.network.constants.*
 import com.example.gnss_app.protocol.Frame
@@ -21,8 +23,10 @@ class VivaClient private constructor(
     private val protocol: Protocol
 ) : Net(if (IS_DEBUG) LOCAL_IP else IP, if (IS_DEBUG) LOCAL_PORT else PORT),
     IEventDispatcher<VivaEventType, VivaEvent<*>> by d {
-    private val frames: MutableList<Frame<ProtocolHead>> = mutableListOf()
 
+    init {
+
+    }
     fun reconnect() {
         stop()
         connect()
@@ -36,7 +40,6 @@ class VivaClient private constructor(
     }
 
     fun reset() {
-        frames.clear()
         bufferIn.clear()
         bufferOut = byteArrayOf()
         protocol.reset()
@@ -48,25 +51,6 @@ class VivaClient private constructor(
 
     private fun authorize() = send(KEY.toByteArray())
 
-    override fun connect() {
-//        CoroutineScope(Dispatchers.IO).launch {
-            Log.d("NET", "connect server current state is connected $isConnect")
-            if (!isConnect)
-                super.connect()
-//        }
-    }
-
-    suspend fun susConnect(): Boolean = suspendCoroutine {
-        CoroutineScope(Dispatchers.IO).launch {
-            Log.d("NET", "connect server current state is connected $isConnect")
-            once(VivaEventType.ERROR) { event ->
-                it.resume(event.message == null)
-            }
-            if (!isConnect)
-                super.connect()
-        }
-    }
-
     override fun send(d: ByteArray) {
         if (d.size <= 10_000_000)
             super.send(d)
@@ -75,51 +59,49 @@ class VivaClient private constructor(
     }
 
     override fun unPackage() {
-        try {
-            frames.addAll(protocol.decode(bufferIn.getAll()))
-            bufferIn.puts(protocol.tailing)
-        } catch (e: Exception) {
-            Log.e("VivaClient", "protocol decode error..reset buffer\n$e")
-            stop()
+        var tmp: ByteArray
+        while (true) {
+            val len = bufferIn.getLen()
+            if (len >= Protocol.HEAD_LENGTH) {
+                tmp = bufferIn.peeks(getMin(1024, len))
+                val (dataLen, frame) = protocol.decode(tmp)
+                if (dataLen > 0) {
+                    bufferIn.gets(dataLen)
+                    frameHandle(frame!!)
+                }
+            }
         }
     }
 
-    override fun frameHandle() {
-        Log.v(
+    private fun frameHandle(frame: Frame<ProtocolHead>) {
+        Log.d(
             "VivaClient",
-            """frames state 
-            |frames is empty: ${frames.isEmpty()}
-            |frames length: ${frames.size}
-            |""".trimMargin()
+            "frame body size: ${frame.body.size} service: ${frame.head.service}}"
         )
-        while (frames.isNotEmpty()) {
-            val frame = frames.removeFirstOrNull() ?: return
-            Log.d(
-                "VivaClient",
-                "frame body size: ${frame.body.size} service: ${frame.head.service}}"
+        when (frame.head.service) {
+            VivaServiceID.HEART -> heartHandle(frame)
+            VivaServiceID.MESSAGE -> dispatch(
+                VivaEventType.Message.RECEIVE,
+                VivaEvent.Success(frame)
             )
-            when (frame.head.service) {
-                VivaServiceID.HEART -> heartHandle(frame)
-                VivaServiceID.MESSAGE -> dispatch(
-                    VivaEventType.Message.RECEIVE,
-                    VivaEvent.Success(frame)
-                )
-                VivaServiceID.VIDEO -> dispatch(
-                    VivaEventType.Video.RECEIVE,
-                    VivaEvent.Success(frame)
-                )
-                VivaServiceID.COMMAND -> {}
-                VivaServiceID.VIDEO -> {}
-                VivaServiceID.FILE -> dispatch(
-                    VivaEventType.File.RECEIVE,
-                    VivaEvent.Success(frame)
-                )
-            }
+            VivaServiceID.VIDEO -> dispatch(
+                VivaEventType.Video.RECEIVE,
+                VivaEvent.Success(frame)
+            )
+            VivaServiceID.COMMAND -> {}
+            VivaServiceID.VIDEO -> {}
+            VivaServiceID.FILE -> dispatch(
+                VivaEventType.File.RECEIVE,
+                VivaEvent.Success(frame)
+            )
         }
     }
 
     override fun onConnectSuccess() {
         Log.d("VivaClient", "onConnectSuccess")
+        CoroutineScope(Dispatchers.IO).launch {
+            receiveAndSendHandler()
+        }
         authorize()
     }
 

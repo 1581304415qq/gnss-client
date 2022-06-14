@@ -7,10 +7,20 @@ import com.example.gnss_app.network.util.toByteArray
 import kotlin.math.pow
 
 @ExperimentalUnsignedTypes
-open class Protocol {
+open class Protocol : IProtocol {
     var tailing: ByteArray = ByteArray(0)
-    var body: ByteArray = ByteArray(0)
-    val head = ProtocolHead(service = 0u, dataLength = 0u)
+    private var _body: ByteArray = ByteArray(0)
+
+    /*
+        当读取时为数据对象转成比特流
+        当写入时存到内部比特数组。读取数据对象时， 用内部存储比特数据解析
+     */
+    var body: ByteArray
+        set(value) {
+            _body = value
+        }
+        get() = toByteArray()
+    private val head = ProtocolHead(service = 0u, dataLength = 0u)
 
     fun reset() {
         tailing = ByteArray(0)
@@ -18,41 +28,30 @@ open class Protocol {
         head.clear()
     }
 
-    /**
-     * 返回剩余数据是否还可以解析
-     */
-    val frames = mutableListOf<Frame<ProtocolHead>>()
-    fun decode(ba: ByteArray): MutableList<Frame<ProtocolHead>> {
-        frames.clear()
-        tailing = ba
-        var frame: Frame<ProtocolHead>? = decodeGetSingleFrame(tailing)
-        while (frame != null) {
-            frames.add(frame)
-            frame = decodeGetSingleFrame(tailing)
-        }
-        return frames
+    fun decode(ba: ByteArray): Pair<Int, Frame<ProtocolHead>?> {
+        if (parserHead(ba))
+            if (parseBody(ba))
+                return Pair(
+                    head.dataLength.toInt() + HEAD_LENGTH,
+                    Frame(head.copy(), _body.clone())
+                )
+        return Pair(0, null)
     }
-    open fun encode(): ByteArray {
-        if (body.isNotEmpty()) {
-            if (body.size > MaxDataLength) throw Error("data size is beyond max")
-            head.dataLength = body.size.toUInt()
-            return head.toByteArray() + body
+
+    open fun encode(service: UShort, data: IData): ByteArray {
+//        if (body.isNotEmpty()) {
+//            if (body.size > MaxDataLength) throw Error("data size is beyond max")
+//            head.dataLength = body.size.toUInt()
+        val head = ProtocolHead(service = service, dataLength = 0u)
+        val bytes = data.toByteArray()
+        return if (bytes == null) {
+            head.toByteArray()
+        } else {
+            head.dataLength = bytes.size.toUInt()
+            head.toByteArray() + bytes
         }
-        return head.toByteArray()
-    }
-    fun decodeGetSingleFrame(ba: ByteArray): Frame<ProtocolHead>? {
-        var frame: Frame<ProtocolHead>? = null
-        watch(ba)
-        val op = 0
-        if (op == -1)
-            reset()
-        if (parserHead(ba, op)) {
-            tailing = if (parseBody(ba, op)) {
-                frame = Frame(head.copy(), body.clone())
-                ba.copyOfRange(op + head.dataLength.toInt() + head.getSize(), ba.size)
-            } else ba
-        }
-        return frame
+//        }
+//        return head.toByteArray()
     }
 
     private var _errorBufferDataLength = 0
@@ -84,11 +83,11 @@ open class Protocol {
             _errorProtocolDataLength++
             reset()
             throw Exception("parse error dataLength < 0")
-        } else if ((head.dataLength.toInt() + head.getSize() + op) <= ba.size) {
+        } else if ((head.dataLength.toInt() + HEAD_LENGTH + op) <= ba.size) {
             // 提取帧数据
-            body = ba.copyOfRange(
-                op + head.getSize(),
-                op + head.dataLength.toInt() + head.getSize()
+            _body = ba.copyOfRange(
+                op + HEAD_LENGTH,
+                op + head.dataLength.toInt() + HEAD_LENGTH
             )
             return true
         }
@@ -96,7 +95,7 @@ open class Protocol {
     }
 
     private fun parserHead(ba: ByteArray, op: Int = 0): Boolean {
-        if (ba.size < (op + head.getSize()))
+        if (ba.size < (op + HEAD_LENGTH))
             return false
         val uba = ba.toUByteArray()
         with(head) {
@@ -119,7 +118,7 @@ open class Protocol {
          */
         val version: UByte = VERSION,
         /**
-         * 协议复用的服务号，用于标识协议中的不同服务，比如向服务器获取get 设置set 添加add ... 都是不同服务（由我们指定）长度2 byte
+         * 协议号 长度2 byte
          */
         var service: UShort,
         /**
@@ -127,7 +126,7 @@ open class Protocol {
          */
         var dataLength: UInt,
 
-        ): IProtocolHead {
+        ) : IProtocol {
         override fun toByteArray(): ByteArray = byteArrayOf(
             (magic / 256u).toByte(), magic.toByte(),
             version.toByte(),
@@ -138,13 +137,16 @@ open class Protocol {
             service = 0u
             dataLength = 0u
         }
-
-        fun getSize() = 11
     }
 
     companion object {
         val MAGIC: UShort = 0xFF00u
         val VERSION: UByte = 0x01u
+        const val HEAD_LENGTH = 9
+    }
+
+    override fun toByteArray(): ByteArray {
+        TODO("Not yet implemented")
     }
 
 }
