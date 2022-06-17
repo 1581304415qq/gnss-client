@@ -22,3 +22,20 @@ fun ByteArray.readUInt(startFrom: Int = 0): UInt {
     }
     return rs
 }
+
+fun UInt.toByteArray(): ByteArray {
+    val ar = ByteArray(4)
+    val offset: UInt = 255u
+    for (s in 0..24 step 8) {
+        ar[3 - s / 8] = (this.shr(s) and offset).toByte()
+    }
+    return ar
+}
+fun Int.toByteArray(): ByteArray {
+    val ar = ByteArray(4)
+    val offset: Int = 255
+    for (s in 0..24 step 8) {
+        ar[3 - s / 8] = (this.shr(s) and offset).toByte()
+    }
+    return ar
+}

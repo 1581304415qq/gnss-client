@@ -9,6 +9,7 @@ import com.example.gnss_app.ble.BleEvent
 import com.example.gnss_app.ble.contance.*
 import com.example.gnss_app.ble.model.AppInfo
 import com.example.gnss_app.ble.model.Heart
+import com.example.gnss_app.ble.model.Server
 import com.example.gnss_app.ble.util.getMin
 import com.example.gnss_app.protocol.Frame
 import com.example.gnss_app.protocol.IData
@@ -35,6 +36,9 @@ object Repository : EventDispatcher<EventType, Event>() {
         BLE.on(BLE_EVENT_TYPE.ON_CHARACTERISTIC_CHANGED, ::characteristicChangeHandle)
         BLE.once(BLE_EVENT_TYPE.ON_SERVICES_DISCOVERED) {
             startHeart()
+            CoroutineScope(Dispatchers.IO).launch {
+                parseDataHandle()
+            }
         }
     }
 
@@ -60,7 +64,7 @@ object Repository : EventDispatcher<EventType, Event>() {
         if (e.uuidS == BLE.uuid(CASTOR_BT_SERVICE_UUID) && BLE.uuid(CASTOR_BT_READ_UUID) == e.uuidC) {
             buffer.puts(e.data!!)
         }
-        // 其他当服务数据接收解析
+        // 其他服务数据接收解析
         else if (e.uuidS == BLE.uuid(CASTOR_BT_SERVICE_UUID) && BLE.uuid(CASTOR_BT_WRITE_UUID) == e.uuidC) {
             Log.i(TAG, "get wifi config :${String(e.data!!)}")
         }
@@ -68,8 +72,9 @@ object Repository : EventDispatcher<EventType, Event>() {
 
     /**
      * 协议解析，再用消息发送出去
+     * 连接成功后 用一个线程去启动
      */
-    private fun parseData() {
+    private fun parseDataHandle() {
         var tmp: ByteArray
         while (true) {
             val len = buffer.getLen()
@@ -89,13 +94,24 @@ object Repository : EventDispatcher<EventType, Event>() {
             ProtocolID.APP_INFO -> {
 
             }
+            ProtocolID.SERVICE_R_SERVER_IP -> {
+                dispatch(EventType.ON_READ_SERVER_CONFIG, Event.Success(frame.body))
+            }
             else -> {}
         }
     }
 
     private fun sendMsg(service: UShort, data: IData) {
         val characteristic = BLE.getCharacteristic(CASTOR_BT_SERVICE_UUID, CASTOR_BT_WRITE_UUID)
-        BLE.write(characteristic, protocol.encode(service, data))
+        BLE.write(
+            characteristic,
+            protocol.encode(service, data)
+        )
+        //        val i = service.toUInt()
+        //        BLE.write(
+        //            characteristic,
+        //            protocol.encode(((i shl 8 and 0x0Fu) or (i and 0x0Fu) shr 8).toUShort(), data)
+        //        )
     }
 
     private fun startHeart() {
@@ -164,6 +180,24 @@ object Repository : EventDispatcher<EventType, Event>() {
             throw e
         }
     }
+
+    suspend fun readServerConfig(data: Server.Read): Server.Read =
+        suspendCoroutine {
+            try {
+                once(EventType.ON_READ_SERVER_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.body = e.data
+                            it.resume(data)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                sendMsg(ProtocolID.SERVICE_R_SERVER_IP, data)
+            } catch (e: Exception) {
+
+            }
+        }
 
     suspend fun readConfig(castorConfig: IData): String =
         suspendCoroutine {
