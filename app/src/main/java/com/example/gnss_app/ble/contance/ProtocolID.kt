@@ -2,13 +2,13 @@ package com.example.gnss_app.ble.contance
 object ProtocolID {
     const val SERVICE_HEART: UShort = 0u
     val APP_INFO: UShort = 1u
-    val SERVICE_R_WKMODE: UShort = 0u
-    val SERVICE_W_WKMODE: UShort = 0u
+    val SERVICE_R_WKMODE: UShort = 2u
+    val SERVICE_W_WKMODE: UShort = 3u
     val SERVICE_R_NETMOD: UShort = 4u
     val SERVICE_W_NETMOD: UShort = 5u
-    val SERVICE_R_IPMOD: UShort = 0u
-    val SERVICE_W_IPMOD: UShort = 0u
-    val SERVICE_R_DBGMOD: UShort = 0u
+    val SERVICE_R_IPMOD: UShort = 6u
+    val SERVICE_W_IPMOD: UShort = 7u
+    val SERVICE_R_DBGMOD: UShort = 8u
     val SERVICE_W_DBGMOD: UShort = 0u
     val SERVICE_R_TEL: UShort = 0u
     val SERVICE_W_TEL: UShort = 0u
@@ -18,8 +18,8 @@ object ProtocolID {
     val SERVICE_W_SYSPWD: UShort = 0u
     val SERVICE_R_TOKEN: UShort = 0u
     val SERVICE_W_TOKEN: UShort = 0u
-    val SERVICE_R_GPRS_STATE: UShort = 0u
-    val SERVICE_W_GPRS_STATE: UShort = 0u
+    val SERVICE_R_GNSS_STATE: UShort = 18u
+    val SERVICE_W_GNSS_STATE: UShort = 19u
     val SERVICE_R_SERVER_IP: UShort = 20u
     val SERVICE_W_SERVER_IP: UShort = 21u
     val SERVICE_R_NTRIP_IP: UShort = 0u

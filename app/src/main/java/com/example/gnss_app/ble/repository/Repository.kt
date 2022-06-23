@@ -7,10 +7,10 @@ import com.example.gnss_app.ble.BLE
 import com.example.gnss_app.ble.BLE_EVENT_TYPE
 import com.example.gnss_app.ble.BleEvent
 import com.example.gnss_app.ble.contance.*
-import com.example.gnss_app.ble.model.DeviceConfig
-import com.example.gnss_app.ble.model.DeviceInfo.AppInfo
+import com.example.gnss_app.ble.model.ControlDevice.*
+import com.example.gnss_app.ble.model.DeviceConfig.*
+import com.example.gnss_app.ble.model.DeviceInfo.*
 import com.example.gnss_app.ble.model.Heart
-import com.example.gnss_app.ble.model.DeviceConfig.Server
 import com.example.gnss_app.ble.util.getMin
 import com.example.gnss_app.ble.util.toHexString
 import com.example.gnss_app.protocol.Frame
@@ -84,7 +84,7 @@ object Repository : EventDispatcher<EventType, Event>() {
                 tmp = buffer.peeks(getMin(1024, len))
                 val (dataLen, frame) = protocol.decode(tmp)
                 if (dataLen > 0) {
-                    Log.v(TAG,"parseDataHandle success $dataLen ${frame!!.body.toHexString()}")
+                    Log.v(TAG, "parseDataHandle success $dataLen ${frame!!.body.toHexString()}")
                     buffer.gets(dataLen)
                     dispatchEvent(frame!!)
                 }
@@ -93,14 +93,19 @@ object Repository : EventDispatcher<EventType, Event>() {
     }
 
     private fun dispatchEvent(frame: Frame<Protocol.ProtocolHead>) {
-        Log.v(TAG,"dispatchEvent ${frame.head.service}")
+        Log.v(TAG, "dispatchEvent ${frame.head.service}")
         val eventType = when (frame.head.service) {
             ProtocolID.APP_INFO -> EventType.ON_R_APP_INFO
+            ProtocolID.SERVICE_R_WKMODE -> EventType.ON_R_WKMODE_CONFIG
+            ProtocolID.SERVICE_W_WKMODE -> EventType.ON_W_WKMODE_CONFIG
             ProtocolID.SERVICE_R_NETMOD -> EventType.ON_R_NETMOD_CONFIG
             ProtocolID.SERVICE_W_NETMOD -> EventType.ON_W_NETMOD_CONFIG
 
             ProtocolID.SERVICE_R_SERVER_IP -> EventType.ON_R_SERVER_CONFIG
+            ProtocolID.SERVICE_W_SERVER_IP -> EventType.ON_W_SERVER_CONFIG
 
+            ProtocolID.SERVICE_R_GNSS_STATE -> EventType.ON_R_GNSS_STATE_CONFIG
+            ProtocolID.SERVICE_W_GNSS_STATE -> EventType.ON_W_GNSS_STATE_CONFIG
 
             else -> EventType.ON_NULL
         }
@@ -182,7 +187,43 @@ object Repository : EventDispatcher<EventType, Event>() {
         }
     }
 
-    suspend fun readNetMode(data: DeviceConfig.NetMode): DeviceConfig.NetMode =
+
+    suspend fun readWorkMode(data: WorkMode): WorkMode =
+        suspendCoroutine {
+            try {
+                once(EventType.ON_R_WKMODE_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.body = e.data
+                            it.resume(data)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                sendMsg(ProtocolID.SERVICE_R_WKMODE, data)
+            } catch (e: Exception) {
+            }
+        }
+
+    suspend fun writeWorkMode(data: NetMode): NetMode =
+        suspendCoroutine {
+            try {
+                once(EventType.ON_W_WKMODE_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.response = e.data
+                            it.resume(data)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                sendMsg(ProtocolID.SERVICE_W_WKMODE, data)
+            } catch (e: Exception) {
+
+            }
+        }
+
+    suspend fun readNetMode(data: NetMode): NetMode =
         suspendCoroutine {
             try {
                 once(EventType.ON_R_NETMOD_CONFIG) { e ->
@@ -199,7 +240,7 @@ object Repository : EventDispatcher<EventType, Event>() {
             }
         }
 
-    suspend fun writeNetMode(data: DeviceConfig.NetMode): DeviceConfig.NetMode =
+    suspend fun writeNetMode(data: NetMode): NetMode =
         suspendCoroutine {
             try {
                 once(EventType.ON_W_NETMOD_CONFIG) { e ->
@@ -247,6 +288,42 @@ object Repository : EventDispatcher<EventType, Event>() {
                     }
                 }
                 sendMsg(ProtocolID.SERVICE_W_SERVER_IP, data)
+            } catch (e: Exception) {
+
+            }
+        }
+
+    suspend fun readGnssState(data: GnssState): GnssState =
+        suspendCoroutine {
+            try {
+                once(EventType.ON_R_GNSS_STATE_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.body = e.data
+                            it.resume(data)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                sendMsg(ProtocolID.SERVICE_R_GNSS_STATE, data)
+            } catch (e: Exception) {
+
+            }
+        }
+
+    suspend fun writeGnssState(data: GnssState): GnssState =
+        suspendCoroutine {
+            try {
+                once(EventType.ON_W_GNSS_STATE_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.response = e.data
+                            it.resume(data)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                sendMsg(ProtocolID.SERVICE_W_GNSS_STATE, data)
             } catch (e: Exception) {
 
             }

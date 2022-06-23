@@ -69,6 +69,18 @@ fun UByteArray.readUInt(startFrom: Int = 0): UInt {
     return rs
 }
 
+fun ByteArray.readInt8(startFrom: Int = 0): UInt {
+    return this[startFrom].toUInt()
+}
+
+fun ByteArray.readUInt(startFrom: Int = 0): UInt {
+    var rs = 0u
+    for (i in startFrom..startFrom + 3) {
+        rs = rs shl 8 or this[i].toUInt()
+    }
+    return rs
+}
+
 fun ByteArray.readUIntLB(startFrom: Int = 0): UInt {
     var rs = 0u
     for (i in startFrom..startFrom + 3) {
@@ -84,6 +96,14 @@ fun UInt.toLB(): UInt =
 fun UInt.toByteArray(): ByteArray {
     val ar = ByteArray(4)
     val offset: UInt = 255u
+    for (s in 0..24 step 8) {
+        ar[3 - s / 8] = (this.shr(s) and offset).toByte()
+    }
+    return ar
+}
+fun Int.toByteArray(): ByteArray {
+    val ar = ByteArray(4)
+    val offset: Int = 255
     for (s in 0..24 step 8) {
         ar[3 - s / 8] = (this.shr(s) and offset).toByte()
     }

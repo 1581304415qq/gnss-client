@@ -1,10 +1,14 @@
 package com.example.gnss_app.ble.model
 
+import com.example.gnss_app.network.util.readUInt
 import com.example.gnss_app.protocol.Data
-import com.example.gnss_app.utils.readUInt
 
 sealed class ControlDevice:Data() {
 
+    var response: ByteArray? = null
+
+    val result: Int
+        get() = response!![0].toInt()
     /**
      *     GNSS模块状态
      *    POWER_OFF =0,

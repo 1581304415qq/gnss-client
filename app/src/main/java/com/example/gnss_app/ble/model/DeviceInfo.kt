@@ -1,7 +1,7 @@
 package com.example.gnss_app.ble.model
 
+import com.example.gnss_app.network.util.readUInt
 import com.example.gnss_app.protocol.Data
-import com.example.gnss_app.utils.readUInt
 
 sealed class DeviceInfo : Data() {
 

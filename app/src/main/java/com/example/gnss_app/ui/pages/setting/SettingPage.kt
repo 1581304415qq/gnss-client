@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LiveData
 import androidx.navigation.NavController
+import com.example.gnss_app.ble.model.DeviceConfig
 import com.example.gnss_app.ui.pages.setting.SettingViewModel
 import com.example.gnss_app.ui.theme.GNSS_APPTheme
 
@@ -33,6 +34,7 @@ fun SettingPage(navController: NavController, viewModel: SettingViewModel) {
                 Text("获取固件信息")
             }
             NetModeConfig(viewModel.netMode, viewModel)
+            GpsConfig(viewModel.gnss_state, viewModel)
         }
 
     }
@@ -119,8 +121,13 @@ fun IPTextField() {
 }
 
 @Composable
-fun GpsConfig(name: String) {
-    Text(text = name)
+fun GpsConfig(
+    state: MutableState<Boolean>,
+    viewModel: SettingViewModel
+) {
+    val switchState by remember {
+        state
+    }
     Row {
         var ms by remember { mutableStateOf("") }
         BasicTextField(
@@ -135,10 +142,16 @@ fun GpsConfig(name: String) {
             },
             singleLine = true
         )
+
         Button(modifier = Modifier
             .absolutePadding(right = 5.dp),
-            onClick = { /*TODO*/ }) {
-            Text("switch")
+            onClick = { }) {
+            Text("配置")
+        }
+        Button(modifier = Modifier
+            .absolutePadding(right = 5.dp),
+            onClick = { viewModel.performOpenCloseGnss() }) {
+            Text(text = if (switchState) "打开gnss" else "关闭gnss")
         }
     }
 }
@@ -226,9 +239,12 @@ fun NtripConfig(name: String) {
 
 @Composable
 fun NetModeConfig(
-    netMode: MutableState<Int>,
+    netMode: MutableState<String>,
     viewModel: SettingViewModel
 ) {
+    var text by remember {
+        netMode
+    }
     Row(Modifier.height(60.dp)) {
         BasicTextField(
             modifier = Modifier
@@ -236,16 +252,13 @@ fun NetModeConfig(
                 .width(50.dp)
                 .absolutePadding(right = 5.dp)
                 .background(Color.Gray, RoundedCornerShape(8.dp)),
-            value = netMode.value.toString(),
+            value = text,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number
             ),
             onValueChange = { newText ->
                 if (newText.length <= 2) {
-                    val text = newText.filter { it.isDigit() }
-                    if (text != "")
-                        netMode.value = text.toInt()
-                    else netMode.value=0
+                    text = newText.filter { it.isDigit() }
                 }
             },
             singleLine = true
@@ -256,7 +269,8 @@ fun NetModeConfig(
             Text(text = "读取网络模式")
         }
         Button(onClick = {
-            viewModel.performWriteNetModeConfig()
+            if (text != "")
+                viewModel.performWriteNetModeConfig(text)
         }) {
             Text(text = "配置网络模式")
         }
@@ -270,7 +284,6 @@ fun SettingPreview() {
         Column(Modifier.padding(10.dp)) {
             NtripConfig(name = "ntrip")
             SocketConfig(name = "socket")
-            GpsConfig(name = "gps")
         }
     }
 }

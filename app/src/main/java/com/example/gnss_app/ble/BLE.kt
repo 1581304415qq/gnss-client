@@ -22,7 +22,7 @@ import java.util.*
 @SuppressLint("MissingPermission")
 object BLE : EventDispatcher<BLE_EVENT_TYPE, BleEvent<*>>() {
     private const val TAG = "BlueTooth"
-    private const val SCAN_PERIOD = 2000L
+    private const val SCAN_PERIOD = 3000L
     private var scanning = false
     private var scanner: BluetoothLeScanner? = null
     private var bluetoothAdapter: BluetoothAdapter? = null

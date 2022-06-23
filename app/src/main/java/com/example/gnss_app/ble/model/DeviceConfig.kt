@@ -1,7 +1,8 @@
 package com.example.gnss_app.ble.model
 
+import com.example.gnss_app.network.util.*
 import com.example.gnss_app.protocol.Data
-import com.example.gnss_app.utils.readInt8
+import com.example.gnss_app.utils.*
 
 sealed class DeviceConfig : Data() {
     var response: ByteArray? = null
@@ -9,13 +10,25 @@ sealed class DeviceConfig : Data() {
     val result: Int
         get() = response!![0].toInt()
 
+    class WorkMode() : DeviceConfig() {
+        private var _value: Int = -1
+        var value: Int
+            set(v) {
+                _value = v
+            }
+            get() = if(body!=null) body!![0].toInt() else -1
+
+        override fun toByteArray(): ByteArray? {
+            return byteArrayOf(_value.toByte())
+        }
+    }
     class NetMode() : DeviceConfig() {
         private var _value: Int = -1
         var value: Int
             set(v) {
                 _value = v
             }
-            get() = body!![0].toInt()
+            get() = if(body!=null) body!![0].toInt() else -1
 
         override fun toByteArray(): ByteArray? {
             return byteArrayOf(_value.toByte())
@@ -68,11 +81,22 @@ sealed class DeviceConfig : Data() {
             set(value) {
                 _id = value
             }
-        var ip: Int = 0
-        var port: Int = 0
+        private var _ip:UInt=0u
+        var ip: UInt
+            get() = body?.readUInt(1) ?: 0u
+            set(value) {
+                _ip = value
+            }
+
+        private var _port:UShort=0u
+        var port: UShort
+            get() = body?.readInt16LB(5) ?: 0u
+            set(value) {
+                _port = value
+            }
 
         override fun toByteArray(): ByteArray? {
-            return byteArrayOf(_id.toByte())
+            return byteArrayOf(_id.toByte())+_ip.toByteArray()+_port.toLB().toByteArray()
         }
 
     }
