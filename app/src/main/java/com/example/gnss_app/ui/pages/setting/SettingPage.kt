@@ -2,24 +2,28 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.LiveData
 import androidx.navigation.NavController
 import com.example.gnss_app.ui.pages.setting.SettingViewModel
 import com.example.gnss_app.ui.theme.GNSS_APPTheme
 
 @Composable
-fun SettingPage(navController: NavController,viewModel: SettingViewModel) {
-    Box(Modifier
-        .fillMaxWidth()
-        .fillMaxHeight()
-        .padding(10.dp)
+fun SettingPage(navController: NavController, viewModel: SettingViewModel) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .fillMaxHeight()
+            .padding(10.dp)
     ) {
         Column {
             Text("Setting")
@@ -28,6 +32,7 @@ fun SettingPage(navController: NavController,viewModel: SettingViewModel) {
             }) {
                 Text("获取固件信息")
             }
+            NetModeConfig(viewModel.netMode, viewModel)
         }
 
     }
@@ -114,7 +119,7 @@ fun IPTextField() {
 }
 
 @Composable
-fun GpsGreeting(name: String) {
+fun GpsConfig(name: String) {
     Text(text = name)
     Row {
         var ms by remember { mutableStateOf("") }
@@ -139,7 +144,7 @@ fun GpsGreeting(name: String) {
 }
 
 @Composable
-fun SocketGreeting(name: String) {
+fun SocketConfig(name: String) {
     Text(text = name)
     Box(
         Modifier
@@ -161,7 +166,7 @@ fun SocketGreeting(name: String) {
 }
 
 @Composable
-fun NtripGreeting(name: String) {
+fun NtripConfig(name: String) {
     Text(text = name)
     Box(
         Modifier
@@ -218,14 +223,54 @@ fun NtripGreeting(name: String) {
         }
     }
 }
+
+@Composable
+fun NetModeConfig(
+    netMode: MutableState<Int>,
+    viewModel: SettingViewModel
+) {
+    Row(Modifier.height(60.dp)) {
+        BasicTextField(
+            modifier = Modifier
+                .fillMaxHeight()
+                .width(50.dp)
+                .absolutePadding(right = 5.dp)
+                .background(Color.Gray, RoundedCornerShape(8.dp)),
+            value = netMode.value.toString(),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number
+            ),
+            onValueChange = { newText ->
+                if (newText.length <= 2) {
+                    val text = newText.filter { it.isDigit() }
+                    if (text != "")
+                        netMode.value = text.toInt()
+                    else netMode.value=0
+                }
+            },
+            singleLine = true
+        )
+        Button(onClick = {
+            viewModel.performReadNetModeConfig()
+        }) {
+            Text(text = "读取网络模式")
+        }
+        Button(onClick = {
+            viewModel.performWriteNetModeConfig()
+        }) {
+            Text(text = "配置网络模式")
+        }
+    }
+}
+
 @Preview
 @Composable
 fun SettingPreview() {
     GNSS_APPTheme {
         Column(Modifier.padding(10.dp)) {
-            NtripGreeting(name = "ntrip")
-            SocketGreeting(name = "socket")
-            GpsGreeting(name = "gps")
+            NtripConfig(name = "ntrip")
+            SocketConfig(name = "socket")
+            GpsConfig(name = "gps")
         }
     }
 }

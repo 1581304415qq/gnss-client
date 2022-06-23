@@ -128,19 +128,21 @@ object BLE : EventDispatcher<BLE_EVENT_TYPE, BleEvent<*>>() {
                     BleEvent.Success(newState)
                 )
                 gatt.discoverServices()
-            } else if (status == BluetoothGatt.GATT_SUCCESS && newState == BluetoothProfile.STATE_DISCONNECTED) {
+            }
+            else if (status == BluetoothGatt.GATT_SUCCESS && newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Log.v(TAG, "Connection State: 2");
                 dispatch(
                     BLE_EVENT_TYPE.ON_DISCONNECT,
-                    BleEvent.Success(newState)
+                    BleEvent.Error(newState,"ble connect fail")
                 )
-            } else if (status != BluetoothGatt.GATT_SUCCESS) {
-                Log.v(TAG, "Connection State: 3");
+            }
+            else if (status != BluetoothGatt.GATT_SUCCESS) {
+                Log.v(TAG, "Connection State: 3 $status");
                 gatt.disconnect();
                 isConnected = false
                 dispatch(
                     BLE_EVENT_TYPE.ON_CONNECT,
-                    BleEvent.Success(newState)
+                    BleEvent.Error(newState,"ble connect fail")
                 )
             }
             dispatch(

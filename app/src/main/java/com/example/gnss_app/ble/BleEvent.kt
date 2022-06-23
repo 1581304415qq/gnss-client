@@ -19,7 +19,7 @@ enum class BLE_EVENT_TYPE {
 
 sealed class BleEvent<T>(val data: T?, val message: String?) {
 
-    class Error(message: String) : BleEvent<Int>(null, message)
+    class Error(val value: Int,message: String) : BleEvent<Int>(value, message)
     class Success(val value: Int) : BleEvent<Int>(null, null)
     class ScanFailed(code: Int) : BleEvent<Int>(null, code.toString())
     class ScanResult(data: android.bluetooth.le.ScanResult) :

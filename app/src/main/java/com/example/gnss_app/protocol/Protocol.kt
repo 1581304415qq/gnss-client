@@ -1,13 +1,12 @@
 package com.example.gnss_app.protocol
 
 import android.util.Log
-import com.example.gnss_app.network.util.readInt
-import com.example.gnss_app.network.util.readInt16
-import com.example.gnss_app.network.util.toByteArray
+import com.example.gnss_app.network.util.*
 import kotlin.math.pow
 
 @ExperimentalUnsignedTypes
 open class Protocol : IProtocol {
+    val TAG="Protocol"
     var tailing: ByteArray = ByteArray(0)
     private var _body: ByteArray = ByteArray(0)
 
@@ -38,20 +37,19 @@ open class Protocol : IProtocol {
         return Pair(0, null)
     }
 
+    /**
+     * 数据封装
+     * 数据ð为小端对齐
+     */
     open fun encode(service: UShort, data: IData): ByteArray {
-//        if (body.isNotEmpty()) {
-//            if (body.size > MaxDataLength) throw Error("data size is beyond max")
-//            head.dataLength = body.size.toUInt()
-        val head = ProtocolHead(service = service, dataLength = 0u)
+        val head = ProtocolHead(service = service.toLB(), dataLength = 0u)
         val bytes = data.toByteArray()
         return if (bytes == null) {
             head.toByteArray()
         } else {
-            head.dataLength = bytes.size.toUInt()
+            head.dataLength = bytes.size.toUInt().toLB()
             head.toByteArray() + bytes
         }
-//        }
-//        return head.toByteArray()
     }
 
     private var _errorBufferDataLength = 0
@@ -97,10 +95,9 @@ open class Protocol : IProtocol {
     private fun parserHead(ba: ByteArray, op: Int = 0): Boolean {
         if (ba.size < (op + HEAD_LENGTH))
             return false
-        val uba = ba.toUByteArray()
         with(head) {
-            service = uba.readInt16(op + 3).toUShort()
-            dataLength = uba.readInt(op + 7)
+            service = ba.readInt16LB(op + 3)
+            dataLength = ba.readUIntLB(op + 5)
         }
         watchHead(head)
         return true
@@ -140,7 +137,7 @@ open class Protocol : IProtocol {
     }
 
     companion object {
-        val MAGIC: UShort = 0xFF00u
+        val MAGIC: UShort = 0x7876u
         val VERSION: UByte = 0x01u
         const val HEAD_LENGTH = 9
     }

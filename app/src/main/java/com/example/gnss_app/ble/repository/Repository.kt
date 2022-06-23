@@ -7,10 +7,12 @@ import com.example.gnss_app.ble.BLE
 import com.example.gnss_app.ble.BLE_EVENT_TYPE
 import com.example.gnss_app.ble.BleEvent
 import com.example.gnss_app.ble.contance.*
-import com.example.gnss_app.ble.model.AppInfo
+import com.example.gnss_app.ble.model.DeviceConfig
+import com.example.gnss_app.ble.model.DeviceInfo.AppInfo
 import com.example.gnss_app.ble.model.Heart
-import com.example.gnss_app.ble.model.Server
+import com.example.gnss_app.ble.model.DeviceConfig.Server
 import com.example.gnss_app.ble.util.getMin
+import com.example.gnss_app.ble.util.toHexString
 import com.example.gnss_app.protocol.Frame
 import com.example.gnss_app.protocol.IData
 import com.example.gnss_app.protocol.Protocol
@@ -82,6 +84,7 @@ object Repository : EventDispatcher<EventType, Event>() {
                 tmp = buffer.peeks(getMin(1024, len))
                 val (dataLen, frame) = protocol.decode(tmp)
                 if (dataLen > 0) {
+                    Log.v(TAG,"parseDataHandle success $dataLen ${frame!!.body.toHexString()}")
                     buffer.gets(dataLen)
                     dispatchEvent(frame!!)
                 }
@@ -90,15 +93,18 @@ object Repository : EventDispatcher<EventType, Event>() {
     }
 
     private fun dispatchEvent(frame: Frame<Protocol.ProtocolHead>) {
-        when (frame.head.service) {
-            ProtocolID.APP_INFO -> {
+        Log.v(TAG,"dispatchEvent ${frame.head.service}")
+        val eventType = when (frame.head.service) {
+            ProtocolID.APP_INFO -> EventType.ON_R_APP_INFO
+            ProtocolID.SERVICE_R_NETMOD -> EventType.ON_R_NETMOD_CONFIG
+            ProtocolID.SERVICE_W_NETMOD -> EventType.ON_W_NETMOD_CONFIG
 
-            }
-            ProtocolID.SERVICE_R_SERVER_IP -> {
-                dispatch(EventType.ON_READ_SERVER_CONFIG, Event.Success(frame.body))
-            }
-            else -> {}
+            ProtocolID.SERVICE_R_SERVER_IP -> EventType.ON_R_SERVER_CONFIG
+
+
+            else -> EventType.ON_NULL
         }
+        dispatch(eventType, Event.Success(frame.body))
     }
 
     private fun sendMsg(service: UShort, data: IData) {
@@ -107,11 +113,6 @@ object Repository : EventDispatcher<EventType, Event>() {
             characteristic,
             protocol.encode(service, data)
         )
-        //        val i = service.toUInt()
-        //        BLE.write(
-        //            characteristic,
-        //            protocol.encode(((i shl 8 and 0x0Fu) or (i and 0x0Fu) shr 8).toUShort(), data)
-        //        )
     }
 
     private fun startHeart() {
@@ -140,7 +141,7 @@ object Repository : EventDispatcher<EventType, Event>() {
                         it.resume(true)
                     }
                     is BleEvent.Error -> {
-
+                        it.resume(false)
                     }
                     else -> {}
                 }
@@ -164,7 +165,7 @@ object Repository : EventDispatcher<EventType, Event>() {
 
     suspend fun readAppInfo(appInfo: AppInfo): AppInfo = suspendCoroutine {
         try {
-            once(EventType.ON_READ_APP_INFO) { e ->
+            once(EventType.ON_R_APP_INFO) { e ->
                 when (e) {
                     is Event.Success -> {
                         appInfo.body = e.data!!
@@ -181,10 +182,45 @@ object Repository : EventDispatcher<EventType, Event>() {
         }
     }
 
-    suspend fun readServerConfig(data: Server.Read): Server.Read =
+    suspend fun readNetMode(data: DeviceConfig.NetMode): DeviceConfig.NetMode =
         suspendCoroutine {
             try {
-                once(EventType.ON_READ_SERVER_CONFIG) { e ->
+                once(EventType.ON_R_NETMOD_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.body = e.data
+                            it.resume(data)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                sendMsg(ProtocolID.SERVICE_R_NETMOD, data)
+            } catch (e: Exception) {
+            }
+        }
+
+    suspend fun writeNetMode(data: DeviceConfig.NetMode): DeviceConfig.NetMode =
+        suspendCoroutine {
+            try {
+                once(EventType.ON_W_NETMOD_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.response = e.data
+                            it.resume(data)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                sendMsg(ProtocolID.SERVICE_W_NETMOD, data)
+            } catch (e: Exception) {
+
+            }
+        }
+
+    suspend fun readServerConfig(data: Server): Server =
+        suspendCoroutine {
+            try {
+                once(EventType.ON_R_SERVER_CONFIG) { e ->
                     when (e) {
                         is Event.Success -> {
                             data.body = e.data
@@ -195,6 +231,23 @@ object Repository : EventDispatcher<EventType, Event>() {
                 }
                 sendMsg(ProtocolID.SERVICE_R_SERVER_IP, data)
             } catch (e: Exception) {
+            }
+        }
+
+    suspend fun writeServerConfig(data: Server): Server =
+        suspendCoroutine {
+            try {
+                once(EventType.ON_W_SERVER_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.response = e.data
+                            it.resume(data)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                sendMsg(ProtocolID.SERVICE_W_SERVER_IP, data)
+            } catch (e: Exception) {
 
             }
         }
@@ -202,7 +255,7 @@ object Repository : EventDispatcher<EventType, Event>() {
     suspend fun readConfig(castorConfig: IData): String =
         suspendCoroutine {
             try {
-                once(EventType.ON_READ_CONFIG) { e ->
+                once(EventType.ON_R_CONFIG) { e ->
                     when (e) {
                         is Event.Success -> {}
                         is Event.Error -> {}

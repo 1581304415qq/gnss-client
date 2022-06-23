@@ -53,17 +53,33 @@ fun UByteArray.readInt8(startFrom: Int = 0): UInt {
     return this[startFrom].toUInt()
 }
 
-fun UByteArray.readInt16(startFrom: Int = 0): UInt {
+fun ByteArray.readInt16(startFrom: Int = 0): UInt {
     return this[startFrom].toUInt().shl(8) or this[startFrom + 1].toUInt()
 }
 
-fun UByteArray.readInt(startFrom: Int = 0): UInt {
+fun ByteArray.readInt16LB(startFrom: Int = 0): UShort {
+    return (this[startFrom].toUInt() or this[startFrom + 1].toUInt().shl(8)).toUShort()
+}
+
+fun UByteArray.readUInt(startFrom: Int = 0): UInt {
     var rs = 0u
     for (i in startFrom..startFrom + 3) {
         rs = rs shl 8 or this[i].toUInt()
     }
     return rs
 }
+
+fun ByteArray.readUIntLB(startFrom: Int = 0): UInt {
+    var rs = 0u
+    for (i in startFrom..startFrom + 3) {
+        rs = rs or this[i].toUInt().shl((i - startFrom) * 8)
+    }
+    return rs
+}
+
+fun UShort.toLB(): UShort = ((this.toInt() and 0x00FF).shl(8) or this.toInt().shr(8)).toUShort()
+fun UInt.toLB(): UInt =
+    this.shl(8 * 3) or (this and 65280u).shl(8) or (this and 16711680u).shr(8) or this.shr(8 * 3)
 
 fun UInt.toByteArray(): ByteArray {
     val ar = ByteArray(4)

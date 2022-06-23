@@ -4,8 +4,8 @@ object ProtocolID {
     val APP_INFO: UShort = 1u
     val SERVICE_R_WKMODE: UShort = 0u
     val SERVICE_W_WKMODE: UShort = 0u
-    val SERVICE_R_NETMOD: UShort = 0u
-    val SERVICE_W_NETMOD: UShort = 0u
+    val SERVICE_R_NETMOD: UShort = 4u
+    val SERVICE_W_NETMOD: UShort = 5u
     val SERVICE_R_IPMOD: UShort = 0u
     val SERVICE_W_IPMOD: UShort = 0u
     val SERVICE_R_DBGMOD: UShort = 0u
@@ -63,7 +63,7 @@ object ProtocolID {
     val SERVICE_CHECK_UPDATE: UShort = 0u
     val SERVICE_UPDATE: UShort = 0u
     val SERVICE_DEBUG_UART_OUT_ENABLE: UShort = 0u
-    val SERVICE_READ_CONFIG: UShort = 0u
+    val SERVICE_READ_CONFIG: UShort = 0x3a00u
     val SERVICE_CLEAN_CONFIG: UShort = 0u
     val SERVICE_GPRS_MSG: UShort = 0u
 }
