@@ -92,26 +92,6 @@ object Repository : EventDispatcher<EventType, Event>() {
         }
     }
 
-    private fun dispatchEvent(frame: Frame<Protocol.ProtocolHead>) {
-        Log.v(TAG, "dispatchEvent ${frame.head.service}")
-        val eventType = when (frame.head.service) {
-            ProtocolID.APP_INFO -> EventType.ON_R_APP_INFO
-            ProtocolID.SERVICE_R_WKMODE -> EventType.ON_R_WKMODE_CONFIG
-            ProtocolID.SERVICE_W_WKMODE -> EventType.ON_W_WKMODE_CONFIG
-            ProtocolID.SERVICE_R_NETMOD -> EventType.ON_R_NETMOD_CONFIG
-            ProtocolID.SERVICE_W_NETMOD -> EventType.ON_W_NETMOD_CONFIG
-
-            ProtocolID.SERVICE_R_SERVER_IP -> EventType.ON_R_SERVER_CONFIG
-            ProtocolID.SERVICE_W_SERVER_IP -> EventType.ON_W_SERVER_CONFIG
-
-            ProtocolID.SERVICE_R_GNSS_STATE -> EventType.ON_R_GNSS_STATE_CONFIG
-            ProtocolID.SERVICE_W_GNSS_STATE -> EventType.ON_W_GNSS_STATE_CONFIG
-
-            else -> EventType.ON_NULL
-        }
-        dispatch(eventType, Event.Success(frame.body))
-    }
-
     private fun sendMsg(service: UShort, data: IData) {
         val characteristic = BLE.getCharacteristic(CASTOR_BT_SERVICE_UUID, CASTOR_BT_WRITE_UUID)
         BLE.write(
@@ -261,7 +241,7 @@ object Repository : EventDispatcher<EventType, Event>() {
     suspend fun readServerConfig(data: Server): Server =
         suspendCoroutine {
             try {
-                once(EventType.ON_R_SERVER_CONFIG) { e ->
+                once(EventType.ON_R_SERVER_IP_CONFIG) { e ->
                     when (e) {
                         is Event.Success -> {
                             data.body = e.data
@@ -278,7 +258,7 @@ object Repository : EventDispatcher<EventType, Event>() {
     suspend fun writeServerConfig(data: Server): Server =
         suspendCoroutine {
             try {
-                once(EventType.ON_W_SERVER_CONFIG) { e ->
+                once(EventType.ON_W_SERVER_IP_CONFIG) { e ->
                     when (e) {
                         is Event.Success -> {
                             data.response = e.data
@@ -344,4 +324,48 @@ object Repository : EventDispatcher<EventType, Event>() {
 
             }
         }
+
+
+
+    private fun dispatchEvent(frame: Frame<Protocol.ProtocolHead>) {
+        Log.v(TAG, "dispatchEvent ${frame.head.service}")
+        val eventType = when (frame.head.service) {
+            ProtocolID.APP_INFO -> EventType.ON_R_APP_INFO
+            ProtocolID.SERVICE_R_WKMODE -> EventType.ON_R_WKMODE_CONFIG
+            ProtocolID.SERVICE_W_WKMODE -> EventType.ON_W_WKMODE_CONFIG
+            ProtocolID.SERVICE_R_NETMOD -> EventType.ON_R_NETMOD_CONFIG
+            ProtocolID.SERVICE_W_NETMOD -> EventType.ON_W_NETMOD_CONFIG
+            ProtocolID.SERVICE_R_IPMOD -> EventType.ON_R_IPMOD_CONFIG
+            ProtocolID.SERVICE_W_IPMOD -> EventType.ON_W_IPMOD_CONFIG
+            ProtocolID.SERVICE_R_DBGMOD -> EventType.ON_R_DBGMOD_CONFIG
+            ProtocolID.SERVICE_W_DBGMOD -> EventType.ON_W_DBGMOD_CONFIG
+            ProtocolID.SERVICE_R_TEL -> EventType.ON_R_TEL_CONFIG
+            ProtocolID.SERVICE_W_TEL -> EventType.ON_W_TEL_CONFIG
+            ProtocolID.SERVICE_R_UART -> EventType.ON_R_UART_CONFIG
+            ProtocolID.SERVICE_W_UART -> EventType.ON_W_UART_CONFIG
+            ProtocolID.SERVICE_R_SYSPWD -> EventType.ON_R_SYSPWD_CONFIG
+            ProtocolID.SERVICE_W_SYSPWD -> EventType.ON_W_SYSPWD_CONFIG
+            ProtocolID.SERVICE_R_TOKEN -> EventType.ON_R_TOKEN_CONFIG
+            ProtocolID.SERVICE_W_TOKEN -> EventType.ON_W_TOKEN_CONFIG
+
+            ProtocolID.SERVICE_R_GNSS_STATE -> EventType.ON_R_GNSS_STATE_CONFIG
+            ProtocolID.SERVICE_W_GNSS_STATE -> EventType.ON_W_GNSS_STATE_CONFIG
+            ProtocolID.SERVICE_R_SERVER_IP -> EventType.ON_R_SERVER_IP_CONFIG
+            ProtocolID.SERVICE_W_SERVER_IP -> EventType.ON_W_SERVER_IP_CONFIG
+
+
+            ProtocolID.SERVICE_R_NTRIP_IP -> EventType.ON_R_NTRIP_IP_CONFIG
+            ProtocolID.SERVICE_W_NTRIP_IP -> EventType.ON_W_NTRIP_IP_CONFIG
+            ProtocolID.SERVICE_R_NTRIP_MOUNT -> EventType.ON_R_NTRIP_MOUNT_CONFIG
+            ProtocolID.SERVICE_W_NTRIP_MOUNT -> EventType.ON_W_NTRIP_MOUNT_CONFIG
+            ProtocolID.SERVICE_R_NTRIP_ACCONT -> EventType.ON_R_NTRIP_ACCONT_CONFIG
+            ProtocolID.SERVICE_W_NTRIP_ACCONT -> EventType.ON_W_NTRIP_ACCONT_CONFIG
+            ProtocolID.SERVICE_R_NTRIP_PASSWD -> EventType.ON_R_NTRIP_PASSWD_CONFIG
+            ProtocolID.SERVICE_W_NTRIP_PASSWD -> EventType.ON_W_NTRIP_PASSWD_CONFIG
+
+            else -> EventType.ON_NULL
+        }
+        dispatch(eventType, Event.Success(frame.body))
+    }
+
 }

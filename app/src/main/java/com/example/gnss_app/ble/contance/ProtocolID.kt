@@ -9,11 +9,11 @@ object ProtocolID {
     val SERVICE_R_IPMOD: UShort = 6u
     val SERVICE_W_IPMOD: UShort = 7u
     val SERVICE_R_DBGMOD: UShort = 8u
-    val SERVICE_W_DBGMOD: UShort = 0u
-    val SERVICE_R_TEL: UShort = 0u
-    val SERVICE_W_TEL: UShort = 0u
-    val SERVICE_R_UART: UShort = 0u
-    val SERVICE_W_UART: UShort = 0u
+    val SERVICE_W_DBGMOD: UShort = 9u
+    val SERVICE_R_TEL: UShort = 10u
+    val SERVICE_W_TEL: UShort = 11u
+    val SERVICE_R_UART: UShort = 12u
+    val SERVICE_W_UART: UShort = 13u
     val SERVICE_R_SYSPWD: UShort = 0u
     val SERVICE_W_SYSPWD: UShort = 0u
     val SERVICE_R_TOKEN: UShort = 0u
@@ -22,14 +22,15 @@ object ProtocolID {
     val SERVICE_W_GNSS_STATE: UShort = 19u
     val SERVICE_R_SERVER_IP: UShort = 20u
     val SERVICE_W_SERVER_IP: UShort = 21u
-    val SERVICE_R_NTRIP_IP: UShort = 0u
-    val SERVICE_W_NTRIP_IP: UShort = 0u
-    val SERVICE_R_GNSS_NTRIP_MOUNT: UShort = 0u
-    val SERVICE_W_GNSS_NTRIP_MOUNT: UShort = 0u
-    val SERVICE_R_GNSS_NTRIP_ACCONT: UShort = 0u
-    val SERVICE_W_GNSS_NTRIP_ACCONT: UShort = 0u
-    val SERVICE_R_GNSS_NTRIP_PASSWD: UShort = 0u
-    val SERVICE_W_GNSS_NTRIP_PASSWD: UShort = 0u
+
+    val SERVICE_R_NTRIP_IP: UShort = 22u
+    val SERVICE_W_NTRIP_IP: UShort = 23u
+    val SERVICE_R_NTRIP_MOUNT: UShort = 24u
+    val SERVICE_W_NTRIP_MOUNT: UShort = 25u
+    val SERVICE_R_NTRIP_ACCONT: UShort = 26u
+    val SERVICE_W_NTRIP_ACCONT: UShort = 27u
+    val SERVICE_R_NTRIP_PASSWD: UShort = 28u
+    val SERVICE_W_NTRIP_PASSWD: UShort = 29u
     val SERVICE_R_HBTIME: UShort = 0u
     val SERVICE_W_HBTIME: UShort = 0u
 
