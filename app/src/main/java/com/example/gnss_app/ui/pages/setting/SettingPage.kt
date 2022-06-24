@@ -1,22 +1,21 @@
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.LiveData
 import androidx.navigation.NavController
-import com.example.gnss_app.ble.model.DeviceConfig
 import com.example.gnss_app.ui.pages.setting.SettingViewModel
 import com.example.gnss_app.ui.theme.GNSS_APPTheme
+import com.example.gnss_app.ui.theme.MyShapes
+import com.example.gnss_app.ui.theme.MyTypography
+import com.example.gnss_app.ui.theme.TextInputBackGroundColor
 
 @Composable
 fun SettingPage(navController: NavController, viewModel: SettingViewModel) {
@@ -33,11 +32,11 @@ fun SettingPage(navController: NavController, viewModel: SettingViewModel) {
             }) {
                 Text("获取固件信息")
             }
-            NetModeConfig(viewModel.netMode, viewModel)
-            GpsConfig(viewModel.gnssState, viewModel)
+            NetModeConfig(viewModel)
+            GpsConfig(viewModel)
 
             NtripConfig(viewModel)
-            SocketConfig(viewModel.socketState, viewModel)
+            SocketConfig(viewModel)
         }
 
     }
@@ -62,15 +61,19 @@ fun IPTextField(onValueChange: (Pair<UInt, UShort>?) -> Unit) {
     Box(
         Modifier
             .fillMaxWidth()
-            .height(30.dp)
+            .height(50.dp)
+            .padding(top = 5.dp, bottom = 5.dp)
     ) {
         Row {
+            Text(
+                style = MyTypography.body2,
+                text="IP:")
             BasicTextField(
                 modifier = Modifier
-                    .fillMaxHeight()
+
                     .width(50.dp)
                     .absolutePadding(right = 5.dp)
-                    .background(Color.Gray, RoundedCornerShape(8.dp)),
+                    .background(TextInputBackGroundColor, MyShapes.small),
                 value = ip_1,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number
@@ -81,12 +84,13 @@ fun IPTextField(onValueChange: (Pair<UInt, UShort>?) -> Unit) {
                 },
                 singleLine = true
             )
+            Text(".")
             BasicTextField(
                 modifier = Modifier
-                    .fillMaxHeight()
+
                     .width(50.dp)
                     .absolutePadding(right = 5.dp)
-                    .background(Color.Gray, RoundedCornerShape(8.dp)),
+                    .background(TextInputBackGroundColor, MyShapes.small),
                 value = ip_2,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number
@@ -97,13 +101,13 @@ fun IPTextField(onValueChange: (Pair<UInt, UShort>?) -> Unit) {
                 },
                 singleLine = true
             )
-
+            Text(".")
             BasicTextField(
                 modifier = Modifier
-                    .fillMaxHeight()
+
                     .width(50.dp)
                     .absolutePadding(right = 5.dp)
-                    .background(Color.Gray, RoundedCornerShape(8.dp)),
+                    .background(TextInputBackGroundColor, MyShapes.small),
                 value = ip_3,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number
@@ -114,13 +118,13 @@ fun IPTextField(onValueChange: (Pair<UInt, UShort>?) -> Unit) {
                 },
                 singleLine = true
             )
-
+            Text(".")
             BasicTextField(
                 modifier = Modifier
-                    .fillMaxHeight()
+
                     .width(50.dp)
                     .absolutePadding(right = 5.dp)
-                    .background(Color.Gray, RoundedCornerShape(8.dp)),
+                    .background(TextInputBackGroundColor, MyShapes.small),
                 value = ip_4,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number
@@ -131,12 +135,13 @@ fun IPTextField(onValueChange: (Pair<UInt, UShort>?) -> Unit) {
                 },
                 singleLine = true
             )
+            Text(":")
             BasicTextField(
                 modifier = Modifier
-                    .fillMaxHeight()
+
                     .width(50.dp)
                     .absolutePadding(right = 5.dp)
-                    .background(Color.Gray, RoundedCornerShape(8.dp)),
+                    .background(TextInputBackGroundColor, MyShapes.small),
                 value = port,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number
@@ -154,212 +159,234 @@ fun IPTextField(onValueChange: (Pair<UInt, UShort>?) -> Unit) {
 
 @Composable
 fun GpsConfig(
-    state: MutableState<Boolean>,
-    viewModel: SettingViewModel
+    viewModel: SettingViewModel = SettingViewModel()
 ) {
     val switchState by remember {
-        state
+        mutableStateOf(false)
     }
-    Row {
-        var ms by remember { mutableStateOf("") }
-        BasicTextField(
-            modifier = Modifier
-                .height(50.dp)
-                .width(50.dp)
-                .absolutePadding(right = 5.dp)
-                .background(Color.Gray, RoundedCornerShape(8.dp)),
-            value = ms,
-            onValueChange = { newText ->
-                ms = newText
-            },
-            singleLine = true
-        )
+    Column() {
+        Text(text = "gnss模块")
+        Row(
+            Modifier
+                .height(60.dp)
+                .padding(top = 10.dp, bottom = 10.dp)
+        ) {
+            var ms by remember { mutableStateOf("") }
+            BasicTextField(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(50.dp)
+                    .absolutePadding(right = 5.dp)
+                    .background(TextInputBackGroundColor, MyShapes.small),
+                value = ms,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number
+                ),
+                onValueChange = { newText ->
+                    ms = newText
+                },
+                singleLine = true
+            )
 
-        Button(modifier = Modifier
-            .absolutePadding(right = 5.dp),
-            onClick = { }) {
-            Text("配置")
-        }
-        Button(modifier = Modifier
-            .absolutePadding(right = 5.dp),
-            onClick = { viewModel.performOpenCloseGnss() }) {
-            Text(text = if (switchState) "打开gnss" else "关闭gnss")
+            Button(modifier = Modifier
+                .absolutePadding(right = 5.dp),
+                onClick = { }) {
+                Text("读取")
+            }
+            Button(modifier = Modifier
+                .absolutePadding(right = 5.dp),
+                onClick = { }) {
+                Text("配置")
+            }
+            Button(modifier = Modifier
+                .absolutePadding(right = 5.dp),
+                onClick = { viewModel.performOpenCloseGnss() }) {
+                Text(text = if (switchState) "打开" else "关闭")
+            }
         }
     }
 }
 
 @Composable
 fun SocketConfig(
-    state: MutableState<Boolean>,
-    viewModel: SettingViewModel
+    viewModel: SettingViewModel = SettingViewModel()
 ) {
-    Text(text = "socket")
-    Box(
+    Column(
         Modifier
-            .height(100.dp)
             .fillMaxWidth()
+            .padding(top = 10.dp, bottom = 10.dp)
     ) {
-        Column {
-            IPTextField {
-                if (it != null) {
-                    viewModel.server.value.ip = it.first
-                    viewModel.server.value.port = it.second
-                }
-            }
-            Row() {
-                Button(
-                    onClick = {
-                        viewModel.performReadServerConfig()
-                    }
-                ) {
-                    Text(
-                        text = "读取配置",
-                        fontSize = 15.sp
-                    )
-                }
-                Button(
-                    onClick = {
-                        viewModel.performWriteServerConfig()
-                    }
-                ) {
-                    Text(
-                        text = "配置",
-                        fontSize = 15.sp
-                    )
-                }
-                Button(
-                    onClick = {
-                        viewModel.performOpenCloseSocket()
-                    }
-                ) {
-                    Text(
-                        text = "开关",
-                        fontSize = 15.sp
-                    )
-                }
-            }
 
+        Text(text = "socket")
+        IPTextField {
+            if (it != null) {
+                viewModel.server.value.ip = it.first
+                viewModel.server.value.port = it.second
+            }
         }
+        Row() {
+            Button(
+                modifier = Modifier
+                    .absolutePadding(right = 5.dp),
+                onClick = {
+                    viewModel.performReadServerConfig()
+                }
+            ) {
+                Text(
+                    text = "读取",
+                    fontSize = 15.sp
+                )
+            }
+            Button(
+                modifier = Modifier
+                    .absolutePadding(right = 5.dp),
+                onClick = {
+                    viewModel.performWriteServerConfig()
+                }
+            ) {
+                Text(
+                    text = "配置",
+                    fontSize = 15.sp
+                )
+            }
+            Button(
+                onClick = {
+                    viewModel.performOpenCloseSocket()
+                }
+            ) {
+                Text(
+                    text = "开关",
+                    fontSize = 15.sp
+                )
+            }
+        }
+
     }
 }
 
 @Composable
 fun NtripConfig(
-    viewModel: SettingViewModel
+    viewModel: SettingViewModel = SettingViewModel()
 ) {
     var account by remember { mutableStateOf("") }
     var passwd by remember { mutableStateOf("") }
     var mount by remember { mutableStateOf("") }
 
-    Box(
+    Column(
         Modifier
-            .height(150.dp)
             .fillMaxWidth()
+            .padding(top = 10.dp, bottom = 10.dp)
     ) {
-        Column {
-            Text(text = "ntrip")
-            // ip设置
-            IPTextField{
-                if (it != null) {
-                    viewModel.ntrip.value.server.ip = it.first
-                    viewModel.ntrip.value.server.port = it.second
-                }
+        Text(text = "ntrip")
+        // ip设置
+        IPTextField {
+            if (it != null) {
+                viewModel.ntrip.value.server.ip = it.first
+                viewModel.ntrip.value.server.port = it.second
             }
-            // 账号 密码 挂载点
-            Row {
-                BasicTextField(
-                    modifier = Modifier
-                        .height(50.dp)
-                        .width(100.dp)
-                        .absolutePadding(right = 5.dp)
-                        .background(Color.Gray, RoundedCornerShape(8.dp)),
-                    singleLine=true,
-                    value = account,
-                    onValueChange = { newText ->
-                        account = newText
-                        viewModel.ntrip.value.account.value=newText
-                    }
-                )
-                BasicTextField(
-                    modifier = Modifier
-                        .height(50.dp)
-                        .width(100.dp)
-                        .absolutePadding(right = 5.dp)
-                        .background(Color.Gray, RoundedCornerShape(8.dp)),
-                    singleLine=true,
-                    value = passwd,
-                    onValueChange = { newText ->
-                        passwd = newText
-                        viewModel.ntrip.value.password.value=newText
-                    }
-                )
-                BasicTextField(
-                    modifier = Modifier
-                        .height(50.dp)
-                        .width(100.dp)
-                        .absolutePadding(right = 5.dp)
-                        .background(Color.Gray, RoundedCornerShape(8.dp)),
-                    singleLine=true,
-                    value = mount,
-                    onValueChange = { newText ->
-                        mount = newText
-                        viewModel.ntrip.value.mount.value=newText
-                    }
-                )
-            }
-            // 按钮
-            Row {
-                Button(
-                    onClick = {
-                        viewModel.performReadNtripConfig()
-                    }
-                ) {
-                    Text(
-                        text = "读取配置",
-                        fontSize = 15.sp
-                    )
-                }
-                Button(
-                    onClick = {
-                        viewModel.performWriteNtripConfig()
-                    }
-                ) {
-                    Text(
-                        text = "配置",
-                        fontSize = 15.sp
-                    )
-                }
-                Button(
-                    onClick = {
-                        viewModel.performOpenCloseNtrip()
-                    }
-                ) {
-                    Text(
-                        text = "开关",
-                        fontSize = 15.sp
-                    )
-                }
-            }
-
         }
+        // 账号 密码 挂载点
+        Row (Modifier.padding(bottom = 5.dp)){
+            BasicTextField(
+                modifier = Modifier
+                    .width(100.dp)
+                    .absolutePadding(right = 5.dp)
+                    .background(TextInputBackGroundColor, MyShapes.small),
+                singleLine = true,
+                value = account,
+                onValueChange = { newText ->
+                    account = newText
+                    viewModel.ntrip.value.account.value = newText
+                }
+            )
+            BasicTextField(
+                modifier = Modifier
+                    .width(100.dp)
+                    .absolutePadding(right = 5.dp)
+                    .background(TextInputBackGroundColor, MyShapes.small),
+                singleLine = true,
+                value = passwd,
+                onValueChange = { newText ->
+                    passwd = newText
+                    viewModel.ntrip.value.password.value = newText
+                }
+            )
+            BasicTextField(
+                modifier = Modifier
+                    .width(100.dp)
+                    .absolutePadding(right = 5.dp)
+                    .background(TextInputBackGroundColor, MyShapes.small),
+                singleLine = true,
+                value = mount,
+                onValueChange = { newText ->
+                    mount = newText
+                    viewModel.ntrip.value.mount.value = newText
+                }
+            )
+        }
+        // 按钮
+        Row {
+            Button(
+                modifier = Modifier
+                    .absolutePadding(right = 5.dp),
+                onClick = {
+                    viewModel.performReadNtripConfig()
+                }
+            ) {
+                Text(
+                    style = MyTypography.button,
+                    text = "读取",
+                    fontSize = 15.sp
+                )
+            }
+            Button(
+                modifier = Modifier
+                    .absolutePadding(right = 5.dp),
+                onClick = {
+                    viewModel.performWriteNtripConfig()
+                }
+            ) {
+                Text(
+                    text = "配置",
+                    fontSize = 15.sp
+                )
+            }
+            Button(
+                onClick = {
+                    viewModel.performOpenCloseNtrip()
+                }
+            ) {
+                Text(
+                    text = "开关",
+                    fontSize = 15.sp
+                )
+            }
+        }
+
     }
 }
 
 @Composable
 fun NetModeConfig(
-    netMode: MutableState<String>,
-    viewModel: SettingViewModel
+    viewModel: SettingViewModel = SettingViewModel(),
+    modifier: Modifier = Modifier
 ) {
     var text by remember {
-        netMode
+        mutableStateOf("")
     }
-    Row(Modifier.height(60.dp)) {
+    Column() {
+        Text("网络模式配置")
+    Row(
+        Modifier
+            .height(60.dp)
+            .padding(top = 10.dp, bottom = 10.dp)
+    ) {
         BasicTextField(
             modifier = Modifier
                 .fillMaxHeight()
                 .width(50.dp)
                 .absolutePadding(right = 5.dp)
-                .background(Color.Gray, RoundedCornerShape(8.dp)),
+                .background(TextInputBackGroundColor, MyShapes.small),
             value = text,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number
@@ -369,29 +396,41 @@ fun NetModeConfig(
                     text = newText.filter { it.isDigit() }
                 }
             },
-            singleLine = true
+            singleLine = true,
+            textStyle = MyTypography.body2
         )
-        Button(onClick = {
-            viewModel.performReadNetModeConfig()
-        }) {
-            Text(text = "读取网络模式")
+        Button(
+            modifier = Modifier
+                .absolutePadding(right = 5.dp),
+            onClick = {
+                viewModel.performReadNetModeConfig()
+            }) {
+            Text(text = "读取")
         }
-        Button(onClick = {
-            if (text != "")
-                viewModel.performWriteNetModeConfig(text)
-        }) {
-            Text(text = "配置网络模式")
+        Button(
+            modifier = Modifier
+                .absolutePadding(right = 5.dp),
+            onClick = {
+                if (text != "")
+                    viewModel.performWriteNetModeConfig(text)
+            }) {
+            Text(text = "配置")
         }
-    }
+    }}
 }
+
+
+
 
 @Preview
 @Composable
 fun SettingPreview() {
     GNSS_APPTheme {
         Column(Modifier.padding(10.dp)) {
-//            NtripConfig(name = "ntrip")
-//            SocketConfig(name = "socket")
+            NetModeConfig()
+            GpsConfig()
+            NtripConfig()
+            SocketConfig()
         }
     }
 }

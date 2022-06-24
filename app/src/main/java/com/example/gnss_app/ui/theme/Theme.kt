@@ -37,8 +37,8 @@ fun GNSS_APPTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composab
 
     MaterialTheme(
         colors = colors,
-        typography = Typography,
-        shapes = Shapes,
+        typography = MyTypography,
+        shapes = MyShapes,
         content = content
     )
 }

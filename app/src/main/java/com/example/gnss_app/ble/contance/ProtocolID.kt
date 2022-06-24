@@ -55,7 +55,7 @@ object ProtocolID {
     val SERVICE_FILE_COMD: UShort = 0u
     val SERVICE_GPIO: UShort = 0u
     val SERVICE_ADC: UShort = 0u
-    val SERVICE_BT: UShort = 0u
+    val SERVICE_BT: UShort = 49u
     val SERVICE_CDA: UShort = 0u
     val SERVICE_SD: UShort = 0u
     val SERVICE_OPERATE_RESPONSE: UShort = 0u
