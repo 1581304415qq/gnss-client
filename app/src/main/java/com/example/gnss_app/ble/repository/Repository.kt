@@ -39,7 +39,10 @@ object Repository : EventDispatcher<EventType, Event>() {
         BLE.once(BLE_EVENT_TYPE.ON_SERVICES_DISCOVERED) {
             startHeart()
             CoroutineScope(Dispatchers.IO).launch {
-                parseDataHandle()
+                try {
+                    parseDataHandle()
+                } catch (e: Exception) {
+                }
             }
         }
     }
@@ -106,7 +109,7 @@ object Repository : EventDispatcher<EventType, Event>() {
             override fun run() {
                 sendMsg(ProtocolID.SERVICE_HEART, heart)
             }
-        }, 0, 10_000)
+        }, 0, 30_000)
     }
 
     suspend fun scan(bluetoothAdapter: BluetoothAdapter): MutableList<ScanResult> =
@@ -244,7 +247,7 @@ object Repository : EventDispatcher<EventType, Event>() {
                 once(EventType.ON_R_SERVER_IP_CONFIG) { e ->
                     when (e) {
                         is Event.Success -> {
-                            data.body = if(e.data!!.size<2) null else e.data
+                            data.body = if (e.data!!.size < 2) null else e.data
                             it.resume(data)
                         }
                         is Event.Error -> {}
@@ -295,95 +298,168 @@ object Repository : EventDispatcher<EventType, Event>() {
      * 配置ntrip服务
      * 包括 服务器ip port mount account password
      */
-    suspend fun writeNtripConfig(data: NtripServer): Boolean =
+    suspend fun writeNtripIP(data: NtripServer): Boolean =
         suspendCoroutine {
             try {
                 once(EventType.ON_W_NTRIP_IP_CONFIG) { e ->
                     when (e) {
                         is Event.Success -> {
                             data.server.response = e.data
-                            it.resume(data.result > 0)
-                        }
-                        is Event.Error -> {}
-                    }
-                }
-                once(EventType.ON_W_NTRIP_MOUNT_CONFIG) { e ->
-                    when (e) {
-                        is Event.Success -> {
-                            data.mount.response = e.data
-                            it.resume(data.result > 0)
-                        }
-                        is Event.Error -> {}
-                    }
-                }
-                once(EventType.ON_W_NTRIP_ACCONT_CONFIG) { e ->
-                    when (e) {
-                        is Event.Success -> {
-                            data.account.response = e.data
-                            it.resume(data.result > 0)
-                        }
-                        is Event.Error -> {}
-                    }
-                }
-                once(EventType.ON_W_NTRIP_PASSWD_CONFIG) { e ->
-                    when (e) {
-                        is Event.Success -> {
-                            data.password.response = e.data
-                            it.resume(data.result > 0)
+                            it.resume(data.server.result > 0)
                         }
                         is Event.Error -> {}
                     }
                 }
                 sendMsg(ProtocolID.SERVICE_W_NTRIP_IP, data.server)
+            } catch (e: Exception) {
+            }
+        }
+
+    suspend fun writeNtripMount(data: NtripServer): Boolean =
+        suspendCoroutine {
+            try {
+                once(EventType.ON_W_NTRIP_MOUNT_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.mount.response = e.data
+                            it.resume(data.mount.result > 0)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
                 sendMsg(ProtocolID.SERVICE_W_NTRIP_MOUNT, data.mount)
+            } catch (e: Exception) {
+            }
+        }
+
+    suspend fun writeNtripAccount(data: NtripServer): Boolean =
+        suspendCoroutine {
+            try {
+                once(EventType.ON_W_NTRIP_ACCONT_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.account.response = e.data
+                            it.resume(data.account.result > 0)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
                 sendMsg(ProtocolID.SERVICE_W_NTRIP_ACCONT, data.account)
+            } catch (e: Exception) {
+            }
+        }
+
+    suspend fun writeNtripPassword(data: NtripServer): Boolean =
+        suspendCoroutine {
+            try {
+                once(EventType.ON_W_NTRIP_PASSWD_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.password.response = e.data
+                            it.resume(data.password.result > 0)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
                 sendMsg(ProtocolID.SERVICE_W_NTRIP_PASSWD, data.password)
             } catch (e: Exception) {
             }
         }
-    suspend fun readNtripConfig(data: NtripServer): NtripServer =
+
+    suspend fun readNtripIP(data: NtripServer): NtripServer =
+        suspendCoroutine {
+            once(EventType.ON_R_NTRIP_IP_CONFIG) { e ->
+                try {
+                    when (e) {
+                        is Event.Success -> {
+                            data.server.body = if (e.data!!.size < 2) null else e.data
+                            it.resume(data)
+                        }
+                        is Event.Error -> {}
+                    }
+                } catch (e: Exception) {
+                }
+            }
+            sendMsg(ProtocolID.SERVICE_R_NTRIP_IP, data.server)
+        }
+
+    suspend fun readNtripMount(data: NtripServer): NtripServer =
+        suspendCoroutine {
+            once(EventType.ON_R_NTRIP_MOUNT_CONFIG) { e ->
+                try {
+                    when (e) {
+                        is Event.Success -> {
+                            data.mount.body = if (e.data!!.size < 2) null else e.data
+                            it.resume(data)
+                        }
+                        is Event.Error -> {}
+                    }
+                } catch (e: Exception) {
+                }
+            }
+            sendMsg(ProtocolID.SERVICE_R_NTRIP_MOUNT, data.mount)
+
+        }
+
+    suspend fun readNtripAccount(data: NtripServer): NtripServer =
         suspendCoroutine {
             try {
-                once(EventType.ON_R_NTRIP_IP_CONFIG) { e ->
-                    when (e) {
-                        is Event.Success -> {
-                            data.server.body = if(e.data!!.size<2)null else e.data
-                            it.resume(data)
-                        }
-                        is Event.Error -> {}
-                    }
-                }
-                once(EventType.ON_R_NTRIP_MOUNT_CONFIG) { e ->
-                    when (e) {
-                        is Event.Success -> {
-                            data.mount.body = if(e.data!!.size<2)null else e.data
-                            it.resume(data)
-                        }
-                        is Event.Error -> {}
-                    }
-                }
                 once(EventType.ON_R_NTRIP_ACCONT_CONFIG) { e ->
                     when (e) {
                         is Event.Success -> {
-                            data.account.body = if(e.data!!.size<2)null else e.data
+                            data.account.body = if (e.data!!.size < 2) null else e.data
                             it.resume(data)
                         }
                         is Event.Error -> {}
                     }
                 }
+                sendMsg(ProtocolID.SERVICE_R_NTRIP_ACCONT, data.account)
+            } catch (e: Exception) {
+            }
+        }
+
+    suspend fun readNtripPassword(data: NtripServer): NtripServer =
+        suspendCoroutine {
+            try {
                 once(EventType.ON_R_NTRIP_PASSWD_CONFIG) { e ->
                     when (e) {
                         is Event.Success -> {
-                            data.password.body = if(e.data!!.size<2)null else e.data
+                            data.password.body = if (e.data!!.size < 2) null else e.data
                             it.resume(data)
                         }
                         is Event.Error -> {}
                     }
                 }
-                sendMsg(ProtocolID.SERVICE_R_NTRIP_IP, data.server)
-                sendMsg(ProtocolID.SERVICE_R_NTRIP_MOUNT, data.mount)
-                sendMsg(ProtocolID.SERVICE_R_NTRIP_ACCONT, data.account)
                 sendMsg(ProtocolID.SERVICE_R_NTRIP_PASSWD, data.password)
+            } catch (e: Exception) {
+            }
+        }
+
+
+    suspend fun writeNtripConfig(data: NtripServer): Boolean =
+        suspendCoroutine {
+            try {
+                CoroutineScope(Dispatchers.IO).launch {
+                    val result =
+                        writeNtripIP(data) and writeNtripMount(data) and writeNtripAccount(data) and writeNtripPassword(
+                            data
+                        )
+                    it.resume(result)
+                }
+            } catch (e: Exception) {
+            }
+        }
+
+    suspend fun readNtripConfig(data: NtripServer): NtripServer =
+        suspendCoroutine {
+            try {
+                CoroutineScope(Dispatchers.IO).launch {
+                    readNtripIP(data)
+                    readNtripMount(data)
+                    readNtripAccount(data)
+                    readNtripPassword(data)
+                    it.resume(data)
+                }
             } catch (e: Exception) {
             }
         }

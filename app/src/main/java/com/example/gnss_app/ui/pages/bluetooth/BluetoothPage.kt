@@ -10,6 +10,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -28,9 +29,13 @@ fun BluetoothPage(navController: NavController, viewModel: BluetoothViewModel) {
     }
     GNSS_APPTheme {
         Column(
-            Modifier
+            modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp)
+                .fillMaxHeight()
+//                .size(100.dp, 100.dp)
+                .padding(10.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (viewModel.status.value != BLE_CONNECT_STATUS.CONNECTED)
                 Connect(viewModel.devices) {
@@ -92,7 +97,13 @@ fun Scan(function: () -> Unit) {
 @Composable
 fun Connect(list: LiveData<List<String>>, function: (i: Int) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    Box(Modifier.fillMaxWidth()) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         TextButton(onClick = {
             expanded = list.value?.isNotEmpty() ?: false
         }) {

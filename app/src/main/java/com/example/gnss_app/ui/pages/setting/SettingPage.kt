@@ -37,14 +37,23 @@ fun SettingPage(navController: NavController, viewModel: SettingViewModel) {
             GpsConfig(viewModel.gnssState, viewModel)
 
             NtripConfig(viewModel)
-            SocketConfig(viewModel.socketState,viewModel)
+            SocketConfig(viewModel.socketState, viewModel)
         }
 
     }
 }
 
+fun convertIPORT(a: String, b: String, c: String, d: String, p: String): Pair<UInt, UShort>? {
+    if ((a == "") or (b == "") or (c == "") or (d == "") or (p == "")) {
+        return null
+    }
+    val ip = a.toUInt().shl(8 * 3) or b.toUInt().shl(8 * 2) or c.toUInt().shl(8) or d.toUInt()
+    val port = p.toUShort()
+    return Pair(ip, port)
+}
+
 @Composable
-fun IPTextField() {
+fun IPTextField(onValueChange: (Pair<UInt, UShort>?) -> Unit) {
     var ip_1 by remember { mutableStateOf("") }
     var ip_2 by remember { mutableStateOf("") }
     var ip_3 by remember { mutableStateOf("") }
@@ -63,8 +72,12 @@ fun IPTextField() {
                     .absolutePadding(right = 5.dp)
                     .background(Color.Gray, RoundedCornerShape(8.dp)),
                 value = ip_1,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number
+                ),
                 onValueChange = { newText ->
                     ip_1 = newText
+                    onValueChange(convertIPORT(ip_1, ip_2, ip_3, ip_4, port))
                 },
                 singleLine = true
             )
@@ -75,8 +88,12 @@ fun IPTextField() {
                     .absolutePadding(right = 5.dp)
                     .background(Color.Gray, RoundedCornerShape(8.dp)),
                 value = ip_2,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number
+                ),
                 onValueChange = { newText ->
                     ip_2 = newText
+                    onValueChange(convertIPORT(ip_1, ip_2, ip_3, ip_4, port))
                 },
                 singleLine = true
             )
@@ -88,8 +105,12 @@ fun IPTextField() {
                     .absolutePadding(right = 5.dp)
                     .background(Color.Gray, RoundedCornerShape(8.dp)),
                 value = ip_3,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number
+                ),
                 onValueChange = { newText ->
                     ip_3 = newText
+                    onValueChange(convertIPORT(ip_1, ip_2, ip_3, ip_4, port))
                 },
                 singleLine = true
             )
@@ -101,8 +122,12 @@ fun IPTextField() {
                     .absolutePadding(right = 5.dp)
                     .background(Color.Gray, RoundedCornerShape(8.dp)),
                 value = ip_4,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number
+                ),
                 onValueChange = { newText ->
                     ip_4 = newText
+                    onValueChange(convertIPORT(ip_1, ip_2, ip_3, ip_4, port))
                 },
                 singleLine = true
             )
@@ -113,8 +138,12 @@ fun IPTextField() {
                     .absolutePadding(right = 5.dp)
                     .background(Color.Gray, RoundedCornerShape(8.dp)),
                 value = port,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number
+                ),
                 onValueChange = { newText ->
                     port = newText
+                    onValueChange(convertIPORT(ip_1, ip_2, ip_3, ip_4, port))
                 },
                 singleLine = true
             )
@@ -171,7 +200,12 @@ fun SocketConfig(
             .fillMaxWidth()
     ) {
         Column {
-            IPTextField()
+            IPTextField {
+                if (it != null) {
+                    viewModel.server.value.ip = it.first
+                    viewModel.server.value.port = it.second
+                }
+            }
             Row() {
                 Button(
                     onClick = {
@@ -223,38 +257,53 @@ fun NtripConfig(
             .fillMaxWidth()
     ) {
         Column {
+            Text(text = "ntrip")
             // ip设置
-            IPTextField()
+            IPTextField{
+                if (it != null) {
+                    viewModel.ntrip.value.server.ip = it.first
+                    viewModel.ntrip.value.server.port = it.second
+                }
+            }
             // 账号 密码 挂载点
             Row {
                 BasicTextField(
                     modifier = Modifier
                         .height(50.dp)
                         .width(100.dp)
-                        .absolutePadding(right = 5.dp),
+                        .absolutePadding(right = 5.dp)
+                        .background(Color.Gray, RoundedCornerShape(8.dp)),
+                    singleLine=true,
                     value = account,
                     onValueChange = { newText ->
                         account = newText
+                        viewModel.ntrip.value.account.value=newText
                     }
                 )
                 BasicTextField(
                     modifier = Modifier
                         .height(50.dp)
                         .width(100.dp)
-                        .absolutePadding(right = 5.dp),
+                        .absolutePadding(right = 5.dp)
+                        .background(Color.Gray, RoundedCornerShape(8.dp)),
+                    singleLine=true,
                     value = passwd,
                     onValueChange = { newText ->
                         passwd = newText
+                        viewModel.ntrip.value.password.value=newText
                     }
                 )
                 BasicTextField(
                     modifier = Modifier
                         .height(50.dp)
                         .width(100.dp)
-                        .absolutePadding(right = 5.dp),
+                        .absolutePadding(right = 5.dp)
+                        .background(Color.Gray, RoundedCornerShape(8.dp)),
+                    singleLine=true,
                     value = mount,
                     onValueChange = { newText ->
                         mount = newText
+                        viewModel.ntrip.value.mount.value=newText
                     }
                 )
             }

@@ -6,7 +6,7 @@ import kotlin.math.pow
 
 @ExperimentalUnsignedTypes
 open class Protocol : IProtocol {
-    val TAG="Protocol"
+    val TAG = "Protocol"
     var tailing: ByteArray = ByteArray(0)
     private var _body: ByteArray = ByteArray(0)
 
@@ -77,11 +77,14 @@ open class Protocol : IProtocol {
 
     private var _errorProtocolDataLength = 0
     private fun parseBody(ba: ByteArray, op: Int = 0): Boolean {
-        if (head.dataLength.toInt() < 1) {
-            _errorProtocolDataLength++
-            reset()
-            throw Exception("parse error dataLength < 0")
-        } else if ((head.dataLength.toInt() + HEAD_LENGTH + op) <= ba.size) {
+//        if (head.dataLength.toInt() < 1) {
+//            _body= byteArrayOf()
+//            return true
+//            _errorProtocolDataLength++
+//            reset()
+//            throw Exception("parse error dataLength < 0")
+//        } else
+        if ((head.dataLength.toInt() + HEAD_LENGTH + op) <= ba.size) {
             // 提取帧数据
             _body = ba.copyOfRange(
                 op + HEAD_LENGTH,
