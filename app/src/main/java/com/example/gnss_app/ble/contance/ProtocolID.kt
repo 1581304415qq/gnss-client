@@ -39,9 +39,9 @@ object ProtocolID {
 // :UShort = 0uvalSERVICE_R_IDLTIME
 // :UShort = 0uvalSERVICE_W_IDLTIME
     val SERVICE_SAVE_CONFIG: UShort = 0u
-    val SERVICE_GPRS: UShort = 0u
-    val SERVICE_GPRS_CACHE: UShort = 0u
-    val SERVICE_GNSS_NTRIP: UShort = 0u
+    val SERVICE_GNSS: UShort = 0u
+    val SERVICE_GNSS_CACHE: UShort = 0u
+    val SERVICE_NTRIP_SWITCH: UShort = 35u
     val SERVICE_ID: UShort = 0u
     val SERVICE_DCDAID: UShort = 0u
     val SERVICE_CSQ: UShort = 0u
@@ -59,12 +59,12 @@ object ProtocolID {
     val SERVICE_CDA: UShort = 0u
     val SERVICE_SD: UShort = 0u
     val SERVICE_OPERATE_RESPONSE: UShort = 0u
-    val SERVICE_SOCKET_SWITCH: UShort = 0u
+    val SERVICE_SOCKET_SWITCH: UShort = 53u
     val SERVICE_SOCKET_DISCONNECT: UShort = 0u
     val SERVICE_CHECK_UPDATE: UShort = 0u
     val SERVICE_UPDATE: UShort = 0u
     val SERVICE_DEBUG_UART_OUT_ENABLE: UShort = 0u
     val SERVICE_READ_CONFIG: UShort = 0x3a00u
     val SERVICE_CLEAN_CONFIG: UShort = 0u
-    val SERVICE_GPRS_MSG: UShort = 0u
+    val SERVICE_GNSS_MSG: UShort = 0u
 }

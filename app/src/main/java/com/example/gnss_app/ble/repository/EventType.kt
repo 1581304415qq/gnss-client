@@ -23,5 +23,37 @@ enum class EventType {
     ON_R_HBTIME_CONFIG, ON_W_HBTIME,
 
 
+    ON_NTRIP_SWITCH,
 
+
+    ON_SAVE_CONFIG
+    , ON_GPRS
+    , ON_GPRS_CACHE
+    , ON_GNSS_NTRIP
+    , ON_ID
+    , ON_DCDAID
+    , ON_CSQ
+    , ON_GSTCDE
+    , ON_IP
+    , ON_REG
+    , ON_ICCID
+    , ON_IMEI
+    , ON_RESTART
+    , ON_FILE
+    , ON_FILE_COMD
+    , ON_GPIO
+    , ON_ADC
+
+    , ON_BT
+    , ON_CDA
+    , ON_SD
+    , ON_OPERATE_RESPONSE
+    , ON_SOCKET_SWITCH
+    , ON_SOCKET_DISCONNECT
+    , ON_CHECK_UPDATE
+    , ON_UPDATE
+    , ON_DEBUG_UART_OUT_ENABLE
+    , ON_READ_CONFIG
+    , ON_CLEAN_CONFIG
+    , ON_GPRS_MSG
 }

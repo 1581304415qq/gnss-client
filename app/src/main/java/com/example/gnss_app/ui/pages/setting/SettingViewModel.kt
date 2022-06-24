@@ -45,7 +45,7 @@ class SettingViewModel : ViewModel() {
         }
     }
 
-    private val _server = Server()
+    private val _server = HostAddress()
     val server = mutableStateOf(_server)
     fun performReadServerConfig() {
         viewModelScope.launch {
@@ -54,13 +54,55 @@ class SettingViewModel : ViewModel() {
         }
     }
 
+    fun performWriteServerConfig() {
+        viewModelScope.launch {
+            val res = Repository.writeServerConfig(_server)
+            Log.i(TAG, "write server res ${res}")
+        }
+    }
+
+    private val _socketState = SocketSwitch()
+    val socketState=mutableStateOf(false)
+    fun performOpenCloseSocket(){
+        _socketState.value = if (gnssState.value) 0 else 1
+        viewModelScope.launch {
+            val res = Repository.writeServerState(_socketState)
+            Log.i(TAG, "write server res ${res}")
+        }
+    }
+
     private val _gnssState = GnssState()
-    val gnss_state = mutableStateOf(false)
+    val gnssState = mutableStateOf(false)
     fun performOpenCloseGnss() {
         viewModelScope.launch {
-            _gnssState.value = if (gnss_state.value) 0 else 1
+            _gnssState.value = if (gnssState.value) 0 else 1
             val res = Repository.writeGnssState(_gnssState)
-            if (res.result > 0) gnss_state.value = !gnss_state.value
+            if (res.result > 0) gnssState.value = !gnssState.value
+            Log.i(TAG, "write gnss state res ${res.value}")
+        }
+    }
+
+    private val _ntrip = NtripServer()
+    val ntrip = mutableStateOf(_ntrip)
+    fun performWriteNtripConfig() {
+        viewModelScope.launch {
+            val res = Repository.writeNtripConfig(_ntrip)
+            Log.i(TAG, "read server res ${res}")
+        }
+    }
+    fun performReadNtripConfig() {
+        viewModelScope.launch {
+            val res = Repository.readNtripConfig(_ntrip)
+            Log.i(TAG, "read server res ${res}")
+        }
+    }
+    private val _ntripState = BaseState()
+    val ntripState = mutableStateOf(false)
+    fun performOpenCloseNtrip() {
+        viewModelScope.launch {
+            _ntripState.value = if (ntripState.value) 0 else 1
+            val res = Repository.writeNtripState(_ntripState)
+            if (res.result > 0) ntripState.value = !ntripState.value
             Log.i(TAG, "write gnss state res ${res.value}")
         }
     }

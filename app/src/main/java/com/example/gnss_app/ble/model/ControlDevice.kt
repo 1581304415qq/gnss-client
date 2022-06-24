@@ -9,6 +9,19 @@ sealed class ControlDevice:Data() {
 
     val result: Int
         get() = response!![0].toInt()
+
+    class BaseState() : ControlDevice() {
+        var _value: Int = 0
+        var value: Int
+            set(v) {
+                _value = if(v>0) 1 else 0
+            }
+            get() = body?.get(0)?.toInt()?:0
+
+        override fun toByteArray(): ByteArray? {
+            return byteArrayOf(_value.toByte())
+        }
+    }
     /**
      *     GNSS模块状态
      *    POWER_OFF =0,

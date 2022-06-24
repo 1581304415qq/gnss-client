@@ -26,7 +26,7 @@ fun SettingPage(navController: NavController, viewModel: SettingViewModel) {
             .fillMaxHeight()
             .padding(10.dp)
     ) {
-        Column {
+        Column(Modifier.padding(10.dp)) {
             Text("Setting")
             Button(onClick = {
                 viewModel.performGetAppInfo()
@@ -34,7 +34,10 @@ fun SettingPage(navController: NavController, viewModel: SettingViewModel) {
                 Text("获取固件信息")
             }
             NetModeConfig(viewModel.netMode, viewModel)
-            GpsConfig(viewModel.gnss_state, viewModel)
+            GpsConfig(viewModel.gnssState, viewModel)
+
+            NtripConfig(viewModel)
+            SocketConfig(viewModel.socketState,viewModel)
         }
 
     }
@@ -157,8 +160,11 @@ fun GpsConfig(
 }
 
 @Composable
-fun SocketConfig(name: String) {
-    Text(text = name)
+fun SocketConfig(
+    state: MutableState<Boolean>,
+    viewModel: SettingViewModel
+) {
+    Text(text = "socket")
     Box(
         Modifier
             .height(100.dp)
@@ -166,73 +172,126 @@ fun SocketConfig(name: String) {
     ) {
         Column {
             IPTextField()
-            Button(
-                onClick = { /*TODO*/ }
-            ) {
-                Text(
-                    text = "switch",
-                    fontSize = 15.sp
-                )
+            Row() {
+                Button(
+                    onClick = {
+                        viewModel.performReadServerConfig()
+                    }
+                ) {
+                    Text(
+                        text = "读取配置",
+                        fontSize = 15.sp
+                    )
+                }
+                Button(
+                    onClick = {
+                        viewModel.performWriteServerConfig()
+                    }
+                ) {
+                    Text(
+                        text = "配置",
+                        fontSize = 15.sp
+                    )
+                }
+                Button(
+                    onClick = {
+                        viewModel.performOpenCloseSocket()
+                    }
+                ) {
+                    Text(
+                        text = "开关",
+                        fontSize = 15.sp
+                    )
+                }
             }
+
         }
     }
 }
 
 @Composable
-fun NtripConfig(name: String) {
-    Text(text = name)
+fun NtripConfig(
+    viewModel: SettingViewModel
+) {
+    var account by remember { mutableStateOf("") }
+    var passwd by remember { mutableStateOf("") }
+    var mount by remember { mutableStateOf("") }
+
     Box(
         Modifier
             .height(150.dp)
             .fillMaxWidth()
     ) {
         Column {
+            // ip设置
             IPTextField()
-            var accont by remember { mutableStateOf("") }
-            Box {
-                Row {
-                    BasicTextField(
-                        modifier = Modifier
-                            .height(50.dp)
-                            .width(100.dp)
-                            .absolutePadding(right = 5.dp),
-                        value = accont,
-                        onValueChange = { newText ->
-                            accont = newText
-                        }
+            // 账号 密码 挂载点
+            Row {
+                BasicTextField(
+                    modifier = Modifier
+                        .height(50.dp)
+                        .width(100.dp)
+                        .absolutePadding(right = 5.dp),
+                    value = account,
+                    onValueChange = { newText ->
+                        account = newText
+                    }
+                )
+                BasicTextField(
+                    modifier = Modifier
+                        .height(50.dp)
+                        .width(100.dp)
+                        .absolutePadding(right = 5.dp),
+                    value = passwd,
+                    onValueChange = { newText ->
+                        passwd = newText
+                    }
+                )
+                BasicTextField(
+                    modifier = Modifier
+                        .height(50.dp)
+                        .width(100.dp)
+                        .absolutePadding(right = 5.dp),
+                    value = mount,
+                    onValueChange = { newText ->
+                        mount = newText
+                    }
+                )
+            }
+            // 按钮
+            Row {
+                Button(
+                    onClick = {
+                        viewModel.performReadNtripConfig()
+                    }
+                ) {
+                    Text(
+                        text = "读取配置",
+                        fontSize = 15.sp
                     )
-                    var passwd by remember { mutableStateOf("") }
-                    BasicTextField(
-                        modifier = Modifier
-                            .height(50.dp)
-                            .width(100.dp)
-                            .absolutePadding(right = 5.dp),
-                        value = passwd,
-                        onValueChange = { newText ->
-                            passwd = newText
-                        }
+                }
+                Button(
+                    onClick = {
+                        viewModel.performWriteNtripConfig()
+                    }
+                ) {
+                    Text(
+                        text = "配置",
+                        fontSize = 15.sp
                     )
-                    var mount by remember { mutableStateOf("") }
-                    BasicTextField(
-                        modifier = Modifier
-                            .height(50.dp)
-                            .width(100.dp)
-                            .absolutePadding(right = 5.dp),
-                        value = mount,
-                        onValueChange = { newText ->
-                            mount = newText
-                        }
+                }
+                Button(
+                    onClick = {
+                        viewModel.performOpenCloseNtrip()
+                    }
+                ) {
+                    Text(
+                        text = "开关",
+                        fontSize = 15.sp
                     )
                 }
             }
-            Button(
-                onClick = { /*TODO*/ }
-            ) {
-                Text(
-                    text = "switch",
-                    fontSize = 15.sp
-                )
-            }
+
         }
     }
 }
@@ -282,8 +341,8 @@ fun NetModeConfig(
 fun SettingPreview() {
     GNSS_APPTheme {
         Column(Modifier.padding(10.dp)) {
-            NtripConfig(name = "ntrip")
-            SocketConfig(name = "socket")
+//            NtripConfig(name = "ntrip")
+//            SocketConfig(name = "socket")
         }
     }
 }

@@ -238,13 +238,13 @@ object Repository : EventDispatcher<EventType, Event>() {
             }
         }
 
-    suspend fun readServerConfig(data: Server): Server =
+    suspend fun readServerConfig(data: HostAddress): HostAddress =
         suspendCoroutine {
             try {
                 once(EventType.ON_R_SERVER_IP_CONFIG) { e ->
                     when (e) {
                         is Event.Success -> {
-                            data.body = e.data
+                            data.body = if(e.data!!.size<2) null else e.data
                             it.resume(data)
                         }
                         is Event.Error -> {}
@@ -255,14 +255,14 @@ object Repository : EventDispatcher<EventType, Event>() {
             }
         }
 
-    suspend fun writeServerConfig(data: Server): Server =
+    suspend fun writeServerConfig(data: HostAddress): Boolean =
         suspendCoroutine {
             try {
                 once(EventType.ON_W_SERVER_IP_CONFIG) { e ->
                     when (e) {
                         is Event.Success -> {
                             data.response = e.data
-                            it.resume(data)
+                            it.resume(data.result > 0)
                         }
                         is Event.Error -> {}
                     }
@@ -272,6 +272,122 @@ object Repository : EventDispatcher<EventType, Event>() {
 
             }
         }
+
+    suspend fun writeServerState(data: SocketSwitch): Boolean =
+        suspendCoroutine {
+            try {
+                once(EventType.ON_SOCKET_SWITCH) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.response = e.data
+                            it.resume(data.result > 0)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                sendMsg(ProtocolID.SERVICE_SOCKET_SWITCH, data)
+            } catch (e: Exception) {
+
+            }
+        }
+
+    /**
+     * 配置ntrip服务
+     * 包括 服务器ip port mount account password
+     */
+    suspend fun writeNtripConfig(data: NtripServer): Boolean =
+        suspendCoroutine {
+            try {
+                once(EventType.ON_W_NTRIP_IP_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.server.response = e.data
+                            it.resume(data.result > 0)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                once(EventType.ON_W_NTRIP_MOUNT_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.mount.response = e.data
+                            it.resume(data.result > 0)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                once(EventType.ON_W_NTRIP_ACCONT_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.account.response = e.data
+                            it.resume(data.result > 0)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                once(EventType.ON_W_NTRIP_PASSWD_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.password.response = e.data
+                            it.resume(data.result > 0)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                sendMsg(ProtocolID.SERVICE_W_NTRIP_IP, data.server)
+                sendMsg(ProtocolID.SERVICE_W_NTRIP_MOUNT, data.mount)
+                sendMsg(ProtocolID.SERVICE_W_NTRIP_ACCONT, data.account)
+                sendMsg(ProtocolID.SERVICE_W_NTRIP_PASSWD, data.password)
+            } catch (e: Exception) {
+            }
+        }
+    suspend fun readNtripConfig(data: NtripServer): NtripServer =
+        suspendCoroutine {
+            try {
+                once(EventType.ON_R_NTRIP_IP_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.server.body = if(e.data!!.size<2)null else e.data
+                            it.resume(data)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                once(EventType.ON_R_NTRIP_MOUNT_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.mount.body = if(e.data!!.size<2)null else e.data
+                            it.resume(data)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                once(EventType.ON_R_NTRIP_ACCONT_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.account.body = if(e.data!!.size<2)null else e.data
+                            it.resume(data)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                once(EventType.ON_R_NTRIP_PASSWD_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.password.body = if(e.data!!.size<2)null else e.data
+                            it.resume(data)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                sendMsg(ProtocolID.SERVICE_R_NTRIP_IP, data.server)
+                sendMsg(ProtocolID.SERVICE_R_NTRIP_MOUNT, data.mount)
+                sendMsg(ProtocolID.SERVICE_R_NTRIP_ACCONT, data.account)
+                sendMsg(ProtocolID.SERVICE_R_NTRIP_PASSWD, data.password)
+            } catch (e: Exception) {
+            }
+        }
+
 
     suspend fun readGnssState(data: GnssState): GnssState =
         suspendCoroutine {
@@ -309,6 +425,25 @@ object Repository : EventDispatcher<EventType, Event>() {
             }
         }
 
+    suspend fun writeNtripState(data: BaseState): BaseState =
+        suspendCoroutine {
+            try {
+                once(EventType.ON_NTRIP_SWITCH) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.response = e.data
+                            it.resume(data)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                sendMsg(ProtocolID.SERVICE_NTRIP_SWITCH, data)
+            } catch (e: Exception) {
+
+            }
+        }
+
+
     suspend fun readConfig(castorConfig: IData): String =
         suspendCoroutine {
             try {
@@ -324,7 +459,6 @@ object Repository : EventDispatcher<EventType, Event>() {
 
             }
         }
-
 
 
     private fun dispatchEvent(frame: Frame<Protocol.ProtocolHead>) {
