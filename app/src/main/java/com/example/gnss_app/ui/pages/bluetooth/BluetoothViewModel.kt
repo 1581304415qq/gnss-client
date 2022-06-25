@@ -29,7 +29,7 @@ class BluetoothViewModel(private val context: Context) : ViewModel() {
     }
 
     @SuppressLint("MissingPermission")
-    fun bleScan() {
+    fun bleScan(stopScan:()->Unit) {
 //        setStatus(BLE_CONNECT_STATUS.SCANNING)
         viewModelScope.launch {
             val result = Repository.scan(btAdapter)
@@ -40,6 +40,7 @@ class BluetoothViewModel(private val context: Context) : ViewModel() {
             devices.postValue(list)
             toastShow(context, TAG, "scan result ${list.size}")
 //            setStatus(BLE_CONNECT_STATUS.SCANNED)
+            stopScan()
         }
     }
 

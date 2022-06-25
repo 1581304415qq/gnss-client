@@ -18,6 +18,11 @@ val MyTypography = Typography(
         fontSize = 14.sp,
         letterSpacing = 0.25.sp
     ),
+    overline = TextStyle(
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 8.sp,
+        letterSpacing = 0.15.sp
+    ),
     button = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.W500,

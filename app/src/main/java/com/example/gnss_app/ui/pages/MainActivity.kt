@@ -45,7 +45,7 @@ class MainActivity() : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    NavHost(navController = navController, startDestination = "SettingPage") {
+                    NavHost(navController = navController, startDestination = "MainPage") {
                         composable("MainPage") {
                             MainPage(navController = navController)
                         }

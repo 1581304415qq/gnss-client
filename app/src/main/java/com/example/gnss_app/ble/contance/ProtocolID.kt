@@ -1,4 +1,5 @@
 package com.example.gnss_app.ble.contance
+
 object ProtocolID {
     const val SERVICE_HEART: UShort = 0u
     val APP_INFO: UShort = 1u
@@ -14,10 +15,10 @@ object ProtocolID {
     val SERVICE_W_TEL: UShort = 11u
     val SERVICE_R_UART: UShort = 12u
     val SERVICE_W_UART: UShort = 13u
-    val SERVICE_R_SYSPWD: UShort = 0u
-    val SERVICE_W_SYSPWD: UShort = 0u
-    val SERVICE_R_TOKEN: UShort = 0u
-    val SERVICE_W_TOKEN: UShort = 0u
+    val SERVICE_R_SYSPWD: UShort = 14u
+    val SERVICE_W_SYSPWD: UShort = 15u
+    val SERVICE_R_TOKEN: UShort = 16u
+    val SERVICE_W_TOKEN: UShort = 17u
     val SERVICE_R_GNSS_STATE: UShort = 18u
     val SERVICE_W_GNSS_STATE: UShort = 19u
     val SERVICE_R_SERVER_IP: UShort = 20u
@@ -31,13 +32,13 @@ object ProtocolID {
     val SERVICE_W_NTRIP_ACCONT: UShort = 27u
     val SERVICE_R_NTRIP_PASSWD: UShort = 28u
     val SERVICE_W_NTRIP_PASSWD: UShort = 29u
-    val SERVICE_R_HBTIME: UShort = 0u
-    val SERVICE_W_HBTIME: UShort = 0u
+    val SERVICE_R_HBTIME: UShort = 30u
+    val SERVICE_W_HBTIME: UShort = 31u
 
-    // valSERVICE_R_APN
-// :UShort = 0uvalSERVICE_W_APN
-// :UShort = 0uvalSERVICE_R_IDLTIME
-// :UShort = 0uvalSERVICE_W_IDLTIME
+    val SERVICE_R_APN: UShort = 0u
+    val SERVICE_W_APN: UShort = 0u
+    val SERVICE_R_IDLTIME: UShort = 0u
+    val SERVICE_W_IDLTIME: UShort = 0u
     val SERVICE_SAVE_CONFIG: UShort = 0u
     val SERVICE_GNSS: UShort = 0u
     val SERVICE_GNSS_CACHE: UShort = 0u

@@ -10,7 +10,7 @@ sealed class DeviceInfo : Data() {
             get() = body?.readUInt() ?: 0u
 
         val info: String
-            get() = String(body!!)
+            get() = if (body == null) "" else String(body!!)
     }
 
     class CSQ() : DeviceInfo() {

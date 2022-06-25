@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -54,7 +55,7 @@ fun BluetoothPage(navController: NavController, viewModel: BluetoothViewModel) {
             }
             if (btIsEnable.value) {
                 Scan {
-                    viewModel.bleScan()
+                    viewModel.bleScan(it)
                 }
             } else {
                 OpenBlueTooth {
@@ -88,8 +89,21 @@ fun OpenBlueTooth(callBack: (b: Boolean) -> Unit) {
 }
 
 @Composable
-fun Scan(function: () -> Unit) {
-    Button(onClick = function) {
+fun Scan(function: (cb:()->Unit) -> Unit) {
+    var stopCircular by remember { mutableStateOf(true) }
+    var progress by remember { mutableStateOf(0.1f) }
+    val animatedProgress = animateFloatAsState(
+        targetValue = progress,
+        animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
+    ).value
+    if (!stopCircular)
+        CircularProgressIndicator()
+    Button(onClick = {
+        function{
+            stopCircular = true
+        }
+        stopCircular = false
+    }) {
         Text(text = "扫描")
     }
 }

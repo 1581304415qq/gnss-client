@@ -41,7 +41,7 @@ sealed class DeviceConfig : Data() {
             set(v) {
                 _value = v
             }
-            get() = String(body!!)
+            get() = if(body==null) "" else String(body!!)
 
         override fun toByteArray(): ByteArray? {
             return _value.toByteArray()

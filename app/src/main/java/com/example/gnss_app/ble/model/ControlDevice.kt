@@ -1,27 +1,30 @@
 package com.example.gnss_app.ble.model
 
+import com.example.gnss_app.network.util.readInt16
 import com.example.gnss_app.network.util.readUInt
+import com.example.gnss_app.network.util.toByteArray
 import com.example.gnss_app.protocol.Data
 
-sealed class ControlDevice:Data() {
+sealed class ControlDevice : Data() {
 
     var response: ByteArray? = null
 
     val result: Int
         get() = response!![0].toInt()
 
-    class BaseState() : ControlDevice() {
+    class State() : ControlDevice() {
         var _value: Int = 0
         var value: Int
             set(v) {
-                _value = if(v>0) 1 else 0
+                _value = if (v > 0) 1 else 0
             }
-            get() = body?.get(0)?.toInt()?:0
+            get() = body?.get(0)?.toInt() ?: 0
 
         override fun toByteArray(): ByteArray? {
             return byteArrayOf(_value.toByte())
         }
     }
+
     /**
      *     GNSS模块状态
      *    POWER_OFF =0,
@@ -35,9 +38,9 @@ sealed class ControlDevice:Data() {
         var _value: Int = 0
         var value: Int
             set(v) {
-                _value = if(v>0) 1 else 0
+                _value = if (v > 0) 1 else 0
             }
-            get() = body?.get(0)?.toInt()?:0
+            get() = body?.get(0)?.toInt() ?: 0
 
         override fun toByteArray(): ByteArray? {
             return byteArrayOf(_value.toByte())
@@ -52,24 +55,26 @@ sealed class ControlDevice:Data() {
         var _value: Int = 0
         var value: Int
             set(v) {
-                _value = if(v>0) 1 else 0
+                _value = if (v > 0) 1 else 0
             }
-            get() = body?.get(0)?.toInt()?:0
+            get() = body?.get(0)?.toInt() ?: 0
 
         override fun toByteArray(): ByteArray? {
             return byteArrayOf(_value.toByte())
         }
     }
+
     class CheckUpgrade() : ControlDevice() {
         val value: Int
-            get() = body?.get(0)?.toInt()?:0
+            get() = body?.get(0)?.toInt() ?: 0
 
         override fun toByteArray(): ByteArray? {
             return null
         }
     }
+
     class ADC() : ControlDevice() {
-        var id:Int=0;
+        var id: Int = 0;
         val value: UInt?
             get() = body?.readUInt()
 
@@ -78,19 +83,33 @@ sealed class ControlDevice:Data() {
         }
     }
 
+    class HBTime() : ControlDevice() {
+        private var _value: UShort = 0u
+        var value: UShort?
+            set(value) {
+                _value = value ?: 0u
+            }
+            get() = body?.readInt16()?.toUShort()
+
+        override fun toByteArray(): ByteArray? {
+            return _value.toByteArray()
+        }
+    }
+
     class DebugSwitch() : ControlDevice() {
         var _value: Int = 0
         var value: Int
             set(v) {
-                _value = if(v>0) 1 else 0
+                _value = if (v > 0) 1 else 0
             }
-            get() = body?.get(0)?.toInt()?:0
+            get() = body?.get(0)?.toInt() ?: 0
 
         override fun toByteArray(): ByteArray? {
             return byteArrayOf(_value.toByte())
         }
     }
+
     class PrintDeviceConfig() : ControlDevice() {
-        override fun toByteArray(): ByteArray? =null
+        override fun toByteArray(): ByteArray? = null
     }
 }

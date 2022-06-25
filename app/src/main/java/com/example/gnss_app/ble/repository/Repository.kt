@@ -170,6 +170,196 @@ object Repository : EventDispatcher<EventType, Event>() {
         }
     }
 
+    suspend fun readNetMode(data: NetMode): NetMode =
+        suspendCoroutine {
+            try {
+                once(EventType.ON_R_NETMOD_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.body = e.data
+                            it.resume(data)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                sendMsg(ProtocolID.SERVICE_R_NETMOD, data)
+            } catch (e: Exception) {
+            }
+        }
+
+    suspend fun writeNetMode(data: NetMode): NetMode =
+        suspendCoroutine {
+            try {
+                once(EventType.ON_W_NETMOD_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.response = e.data
+                            it.resume(data)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                sendMsg(ProtocolID.SERVICE_W_NETMOD, data)
+            } catch (e: Exception) {
+
+            }
+        }
+
+    suspend fun readIPMode(data: NetMode): NetMode =
+        suspendCoroutine {
+            try {
+                once(EventType.ON_R_IPMOD_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.body = e.data
+                            it.resume(data)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                sendMsg(ProtocolID.SERVICE_R_IPMOD, data)
+            } catch (e: Exception) {
+            }
+        }
+
+    suspend fun writeIPMode(data: NetMode): NetMode =
+        suspendCoroutine {
+            try {
+                once(EventType.ON_W_IPMOD_CONFIG) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.response = e.data
+                            it.resume(data)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                sendMsg(ProtocolID.SERVICE_W_IPMOD, data)
+            } catch (e: Exception) {
+
+            }
+        }
+
+    suspend fun readTel(data: BaseStringData): BaseStringData =
+        suspendCoroutine {
+            once(EventType.ON_R_TEL_CONFIG) { e ->
+                try {
+                    when (e) {
+                        is Event.Success -> {
+                            data.body = e.data!!
+                            it.resume(data)
+                        }
+                        is Event.Error -> {
+                        }
+                    }
+                } catch (e: Exception) {
+                    throw e
+                }
+            }
+            sendMsg(ProtocolID.SERVICE_R_TEL, data)
+
+        }
+
+    suspend fun writeTel(data: BaseStringData): Boolean =
+        suspendCoroutine {
+            once(EventType.ON_W_TEL_CONFIG) { e ->
+                try {
+                    when (e) {
+                        is Event.Success -> {
+                            data.response = e.data!!
+                            it.resume(data.result > 0)
+                        }
+                        is Event.Error -> {
+                        }
+                    }
+                } catch (e: Exception) {
+                    throw e
+                }
+            }
+            sendMsg(ProtocolID.SERVICE_W_TEL, data)
+
+        }
+
+    suspend fun readSysPasswd(data: BaseStringData): BaseStringData =
+        suspendCoroutine {
+            once(EventType.ON_R_SYSPWD_CONFIG) { e ->
+                try {
+                    when (e) {
+                        is Event.Success -> {
+                            data.body = e.data!!
+                            it.resume(data)
+                        }
+                        is Event.Error -> {
+                        }
+                    }
+                } catch (e: Exception) {
+                    throw e
+                }
+            }
+            sendMsg(ProtocolID.SERVICE_R_SYSPWD, data)
+
+        }
+
+    suspend fun writeSysPasswd(data: BaseStringData): Boolean =
+        suspendCoroutine {
+            once(EventType.ON_W_SYSPWD_CONFIG) { e ->
+                try {
+                    when (e) {
+                        is Event.Success -> {
+                            data.response = e.data!!
+                            it.resume(data.result > 0)
+                        }
+                        is Event.Error -> {
+                        }
+                    }
+                } catch (e: Exception) {
+                    throw e
+                }
+            }
+            sendMsg(ProtocolID.SERVICE_W_SYSPWD, data)
+
+        }
+
+    suspend fun readToken(data: BaseStringData): BaseStringData =
+        suspendCoroutine {
+            once(EventType.ON_R_TOKEN_CONFIG) { e ->
+                try {
+                    when (e) {
+                        is Event.Success -> {
+                            data.body = e.data!!
+                            it.resume(data)
+                        }
+                        is Event.Error -> {
+                        }
+                    }
+                } catch (e: Exception) {
+                    throw e
+                }
+            }
+            sendMsg(ProtocolID.SERVICE_R_TOKEN, data)
+
+        }
+
+    suspend fun writeToken(data: BaseStringData): Boolean =
+        suspendCoroutine {
+            once(EventType.ON_W_TOKEN_CONFIG) { e ->
+                try {
+                    when (e) {
+                        is Event.Success -> {
+                            data.response = e.data!!
+                            it.resume(data.result > 0)
+                        }
+                        is Event.Error -> {
+                        }
+                    }
+                } catch (e: Exception) {
+                    throw e
+                }
+            }
+            sendMsg(ProtocolID.SERVICE_W_TOKEN, data)
+
+        }
+
 
     suspend fun readWorkMode(data: WorkMode): WorkMode =
         suspendCoroutine {
@@ -201,41 +391,6 @@ object Repository : EventDispatcher<EventType, Event>() {
                     }
                 }
                 sendMsg(ProtocolID.SERVICE_W_WKMODE, data)
-            } catch (e: Exception) {
-
-            }
-        }
-
-    suspend fun readNetMode(data: NetMode): NetMode =
-        suspendCoroutine {
-            try {
-                once(EventType.ON_R_NETMOD_CONFIG) { e ->
-                    when (e) {
-                        is Event.Success -> {
-                            data.body = e.data
-                            it.resume(data)
-                        }
-                        is Event.Error -> {}
-                    }
-                }
-                sendMsg(ProtocolID.SERVICE_R_NETMOD, data)
-            } catch (e: Exception) {
-            }
-        }
-
-    suspend fun writeNetMode(data: NetMode): NetMode =
-        suspendCoroutine {
-            try {
-                once(EventType.ON_W_NETMOD_CONFIG) { e ->
-                    when (e) {
-                        is Event.Success -> {
-                            data.response = e.data
-                            it.resume(data)
-                        }
-                        is Event.Error -> {}
-                    }
-                }
-                sendMsg(ProtocolID.SERVICE_W_NETMOD, data)
             } catch (e: Exception) {
 
             }
@@ -485,8 +640,8 @@ object Repository : EventDispatcher<EventType, Event>() {
 
     suspend fun writeGnssState(data: GnssState): GnssState =
         suspendCoroutine {
-            try {
-                once(EventType.ON_W_GNSS_STATE_CONFIG) { e ->
+            once(EventType.ON_W_GNSS_STATE_CONFIG) { e ->
+                try {
                     when (e) {
                         is Event.Success -> {
                             data.response = e.data
@@ -494,14 +649,13 @@ object Repository : EventDispatcher<EventType, Event>() {
                         }
                         is Event.Error -> {}
                     }
+                } catch (e: Exception) {
                 }
-                sendMsg(ProtocolID.SERVICE_W_GNSS_STATE, data)
-            } catch (e: Exception) {
-
             }
+            sendMsg(ProtocolID.SERVICE_W_GNSS_STATE, data)
         }
 
-    suspend fun writeNtripState(data: BaseState): BaseState =
+    suspend fun writeNtripState(data: State): State =
         suspendCoroutine {
             try {
                 once(EventType.ON_NTRIP_SWITCH) { e ->
@@ -519,6 +673,56 @@ object Repository : EventDispatcher<EventType, Event>() {
             }
         }
 
+    suspend fun writeBTState(data: State): State =
+        suspendCoroutine {
+            try {
+                once(EventType.ON_BT_SWITCH) { e ->
+                    when (e) {
+                        is Event.Success -> {
+                            data.response = e.data
+                            it.resume(data)
+                        }
+                        is Event.Error -> {}
+                    }
+                }
+                sendMsg(ProtocolID.SERVICE_BT, data)
+            } catch (e: Exception) {
+            }
+        }
+
+    suspend fun readHbTime(data: HBTime): HBTime =
+        suspendCoroutine {
+            once(EventType.ON_R_HBTIME_CONFIG) { e ->
+                try {
+                    when (e) {
+                        is Event.Success -> {
+                            data.body = e.data
+                            it.resume(data)
+                        }
+                        is Event.Error -> {}
+                    }
+                } catch (e: Exception) {
+                }
+            }
+            sendMsg(ProtocolID.SERVICE_R_HBTIME, data)
+        }
+
+    suspend fun writeHbTime(data: HBTime): Boolean =
+        suspendCoroutine {
+            once(EventType.ON_W_HBTIME_CONFIG) { e ->
+                try {
+                    when (e) {
+                        is Event.Success -> {
+                            data.response = e.data
+                            it.resume(data.result > 0)
+                        }
+                        is Event.Error -> {}
+                    }
+                } catch (e: Exception) {
+                }
+            }
+            sendMsg(ProtocolID.SERVICE_W_HBTIME, data)
+        }
 
     suspend fun readConfig(castorConfig: IData): String =
         suspendCoroutine {

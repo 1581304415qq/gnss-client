@@ -18,28 +18,66 @@ class SettingViewModel : ViewModel() {
     val password: MutableLiveData<String> by lazy { MutableLiveData("") }
     val wifiScanResult = mutableListOf<String>()
 
-    val appInfo = mutableStateOf("")
     private val _appInfo = AppInfo()
+    val appInfo = mutableStateOf("")
     fun performGetAppInfo() {
         viewModelScope.launch {
             val res = Repository.readAppInfo(_appInfo)
-            Log.i(TAG, "getAppInfo res ${res.info}".trimMargin())
+            appInfo.value = res.info
+            Log.i(TAG, "getAppInfo res  ${res.info}")
         }
     }
+
+    private val _sysPwd = BaseStringData()
+    val sysPwd = mutableStateOf("")
+    fun performReadSysPwd() {
+        viewModelScope.launch {
+            val res = Repository.readSysPasswd(_sysPwd)
+            sysPwd.value = res.value
+            Log.i(TAG, "get sys password res ${res.value}")
+        }
+    }
+
+    fun performWriteSysPwd(value: String) {
+        viewModelScope.launch {
+            _sysPwd.value = value
+            val res = Repository.writeSysPasswd(_sysPwd)
+            Log.i(TAG, "get sys password  res ${res}")
+        }
+    }
+
+    private val _phoneNum = BaseStringData()
+    val phoneNum = mutableStateOf("")
+    fun performReadTel() {
+        viewModelScope.launch {
+            val res = Repository.readTel(_phoneNum)
+            phoneNum.value = res.value
+            Log.i(TAG, "get phoneNum res ${res.value}")
+        }
+    }
+
+    fun performWriteTel(value: String) {
+        viewModelScope.launch {
+            _phoneNum.value = value
+            val res = Repository.writeTel(_phoneNum)
+            Log.i(TAG, "get phoneNum res ${res}")
+        }
+    }
+
 
     val netMode = mutableStateOf("")
     private val _netMode = NetMode()
     fun performReadNetModeConfig() {
         viewModelScope.launch {
             val res = Repository.readNetMode(_netMode)
-            Log.i(TAG, "read netmode res ${res.value}")
             netMode.value = res.value.toString()
+            Log.i(TAG, "read netmode res ${res.value}")
         }
     }
 
     fun performWriteNetModeConfig(value: String) {
-        _netMode.value = value.toInt()
         viewModelScope.launch {
+            _netMode.value = value.toInt()
             val res = Repository.writeNetMode(_netMode)
             Log.i(TAG, "write netmode res ${res.result}")
         }
@@ -47,10 +85,14 @@ class SettingViewModel : ViewModel() {
 
     private val _server = HostAddress()
     val server = mutableStateOf(_server)
+    val socketIP = mutableStateOf(0u)
+    val socketPort = mutableStateOf<UShort>(0u)
     fun performReadServerConfig() {
         viewModelScope.launch {
             val res = Repository.readServerConfig(_server)
-            Log.i(TAG, "read server res ${res.id} ${res.ip}")
+            socketIP.value=res.ip
+            socketPort.value=res.port
+            Log.i(TAG, "read server res id:${res.id} ip:${res.ip} port:${res.port}")
         }
     }
 
@@ -62,8 +104,8 @@ class SettingViewModel : ViewModel() {
     }
 
     private val _socketState = SocketSwitch()
-    val socketState=mutableStateOf(false)
-    fun performOpenCloseSocket(){
+    val socketState = mutableStateOf(false)
+    fun performOpenCloseSocket() {
         _socketState.value = if (gnssState.value) 0 else 1
         viewModelScope.launch {
             val res = Repository.writeServerState(_socketState)
@@ -75,9 +117,10 @@ class SettingViewModel : ViewModel() {
     val gnssState = mutableStateOf(false)
     fun performOpenCloseGnss() {
         viewModelScope.launch {
-            _gnssState.value = if (gnssState.value) 0 else 1
+            _gnssState.value = if (!gnssState.value) 0 else 1
             val res = Repository.writeGnssState(_gnssState)
-            if (res.result > 0) gnssState.value = !gnssState.value
+//            if (res.result > 0)
+            gnssState.value = !gnssState.value
             Log.i(TAG, "write gnss state res ${res.value}")
         }
     }
@@ -90,13 +133,15 @@ class SettingViewModel : ViewModel() {
             Log.i(TAG, "read server res ${res}")
         }
     }
+
     fun performReadNtripConfig() {
         viewModelScope.launch {
             val res = Repository.readNtripConfig(_ntrip)
             Log.i(TAG, "read server res ${res}")
         }
     }
-    private val _ntripState = BaseState()
+
+    private val _ntripState = State()
     val ntripState = mutableStateOf(false)
     fun performOpenCloseNtrip() {
         viewModelScope.launch {
