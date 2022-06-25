@@ -740,6 +740,22 @@ object Repository : EventDispatcher<EventType, Event>() {
             }
         }
 
+    suspend fun saveConfig(): Boolean =
+        suspendCoroutine {
+            once(EventType.ON_SAVE_CONFIG) { e ->
+                try {
+                    when (e) {
+                        is Event.Success -> {
+                            it.resume(e.data!![0] > 0)
+                        }
+                        is Event.Error -> {}
+                    }
+                } catch (e: Exception) {
+
+                }
+            }
+            sendMsg(ProtocolID.SERVICE_SAVE_CONFIG, BaseStringData())
+        }
 
     private fun dispatchEvent(frame: Frame<Protocol.ProtocolHead>) {
         Log.v(TAG, "dispatchEvent ${frame.head.service}")
@@ -776,6 +792,8 @@ object Repository : EventDispatcher<EventType, Event>() {
             ProtocolID.SERVICE_W_NTRIP_ACCONT -> EventType.ON_W_NTRIP_ACCONT_CONFIG
             ProtocolID.SERVICE_R_NTRIP_PASSWD -> EventType.ON_R_NTRIP_PASSWD_CONFIG
             ProtocolID.SERVICE_W_NTRIP_PASSWD -> EventType.ON_W_NTRIP_PASSWD_CONFIG
+
+            ProtocolID.SERVICE_SAVE_CONFIG -> EventType.ON_SAVE_CONFIG
 
             else -> EventType.ON_NULL
         }

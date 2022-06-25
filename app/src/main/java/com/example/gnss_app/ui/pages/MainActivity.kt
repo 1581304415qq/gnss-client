@@ -65,7 +65,6 @@ class MainActivity() : ComponentActivity() {
 
 @Composable
 fun MainPage(navController: NavController) {
-    Text("main")
     RequestPermission {
         if (it.isEmpty())
             navController.navigate("BluetoothPage")

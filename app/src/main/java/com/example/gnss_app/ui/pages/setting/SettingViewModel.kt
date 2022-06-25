@@ -13,11 +13,6 @@ import kotlinx.coroutines.launch
 
 class SettingViewModel : ViewModel() {
     val TAG = "SettingViewModel"
-
-    val ssid: MutableLiveData<String> by lazy { MutableLiveData("") }
-    val password: MutableLiveData<String> by lazy { MutableLiveData("") }
-    val wifiScanResult = mutableListOf<String>()
-
     private val _appInfo = AppInfo()
     val appInfo = mutableStateOf("")
     fun performGetAppInfo() {
@@ -90,8 +85,8 @@ class SettingViewModel : ViewModel() {
     fun performReadServerConfig() {
         viewModelScope.launch {
             val res = Repository.readServerConfig(_server)
-            socketIP.value=res.ip
-            socketPort.value=res.port
+            socketIP.value = res.ip
+            socketPort.value = res.port
             Log.i(TAG, "read server res id:${res.id} ip:${res.ip} port:${res.port}")
         }
     }
@@ -129,6 +124,10 @@ class SettingViewModel : ViewModel() {
     val ntrip = mutableStateOf(_ntrip)
     val ntripIP = mutableStateOf(0u)
     val ntripPort = mutableStateOf<UShort>(0u)
+
+    val ntripAccount = mutableStateOf("")
+    val ntripPasswd = mutableStateOf("")
+    val ntripMount = mutableStateOf("")
     fun performWriteNtripConfig() {
         viewModelScope.launch {
             val res = Repository.writeNtripConfig(_ntrip)
@@ -139,9 +138,15 @@ class SettingViewModel : ViewModel() {
     fun performReadNtripConfig() {
         viewModelScope.launch {
             val res = Repository.readNtripConfig(_ntrip)
-            ntripIP.value=res.server.ip
-            ntripPort.value=res.server.port
-            Log.i(TAG, "read ntrip res id:${res.server.id} ip:${res.server.ip} port:${res.server.port}")
+            ntripIP.value = res.server.ip
+            ntripPort.value = res.server.port
+            ntripAccount.value = res.account.value
+            ntripPasswd.value = res.password.value
+            ntripMount.value = res.mount.value
+            Log.i(
+                TAG,
+                "read ntrip res id:${res.server.id} ip:${res.server.ip} port:${res.server.port}"
+            )
         }
     }
 
@@ -157,4 +162,9 @@ class SettingViewModel : ViewModel() {
     }
 
 
+    fun performSaveConfig() {
+        viewModelScope.launch {
+            val res = Repository.saveConfig()
+        }
+    }
 }

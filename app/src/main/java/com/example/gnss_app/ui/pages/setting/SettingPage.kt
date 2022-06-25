@@ -41,6 +41,11 @@ fun SettingPage(navController: NavController, viewModel: SettingViewModel) {
 
             NtripConfig(viewModel)
             SocketConfig(viewModel)
+            Button(onClick = {
+                viewModel.performSaveConfig()
+            }) {
+                Text(text = "保存配置")
+            }
         }
 
     }
@@ -293,9 +298,9 @@ fun SocketConfig(
 fun NtripConfig(
     viewModel: SettingViewModel = SettingViewModel()
 ) {
-    var account by remember { mutableStateOf(viewModel.ntrip.value.account.value) }
-    var passwd by remember { mutableStateOf(viewModel.ntrip.value.password.value) }
-    var mount by remember { mutableStateOf(viewModel.ntrip.value.mount.value) }
+    var account by remember { viewModel.ntripAccount}
+    var passwd by remember { viewModel.ntripPasswd}
+    var mount by remember { viewModel.ntripMount }
 
     Column(
         Modifier

@@ -39,7 +39,7 @@ object ProtocolID {
     val SERVICE_W_APN: UShort = 0u
     val SERVICE_R_IDLTIME: UShort = 0u
     val SERVICE_W_IDLTIME: UShort = 0u
-    val SERVICE_SAVE_CONFIG: UShort = 0u
+    val SERVICE_SAVE_CONFIG: UShort = 32u
     val SERVICE_GNSS: UShort = 0u
     val SERVICE_GNSS_CACHE: UShort = 0u
     val SERVICE_NTRIP_SWITCH: UShort = 35u

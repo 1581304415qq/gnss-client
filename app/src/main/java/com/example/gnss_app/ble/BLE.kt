@@ -38,7 +38,7 @@ object BLE : EventDispatcher<BLE_EVENT_TYPE, BleEvent<*>>() {
     }
 
     private fun deviceFound(result: ScanResult) {
-        val tmp = devices.filter { it.device.address==result.device.address }
+        val tmp = devices.filter { it.device.address == result.device.address }
         Log.v(TAG, "onScanResult: ${result.device.address} - ${result.device.name} ${result.rssi}")
         if (tmp.isEmpty()) {
             devices.add(result)
@@ -128,21 +128,23 @@ object BLE : EventDispatcher<BLE_EVENT_TYPE, BleEvent<*>>() {
                     BleEvent.Success(newState)
                 )
                 gatt.discoverServices()
-            }
-            else if (status == BluetoothGatt.GATT_SUCCESS && newState == BluetoothProfile.STATE_DISCONNECTED) {
+            } else if (status == BluetoothGatt.GATT_SUCCESS && newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Log.v(TAG, "Connection State: 2");
                 dispatch(
                     BLE_EVENT_TYPE.ON_DISCONNECT,
-                    BleEvent.Error(newState,"ble connect fail")
+                    BleEvent.Success(newState)
                 )
-            }
-            else if (status != BluetoothGatt.GATT_SUCCESS) {
+            } else if (status != BluetoothGatt.GATT_SUCCESS) {
                 Log.v(TAG, "Connection State: 3 $status");
+                if (newState == 133) {
+                    // 垃圾的华为错误
+                }
                 gatt.disconnect();
+                gatt.close()
                 isConnected = false
                 dispatch(
                     BLE_EVENT_TYPE.ON_CONNECT,
-                    BleEvent.Error(newState,"ble connect fail")
+                    BleEvent.Error(newState, "ble connect fail")
                 )
             }
             dispatch(
@@ -305,6 +307,7 @@ object BLE : EventDispatcher<BLE_EVENT_TYPE, BleEvent<*>>() {
             BleEvent.CharacteristicChange(uuidS, uuidC, value)
         )
     }
+
     private fun log(tag: String = TAG, msg: String) = Log.v(tag, msg)
 }
 
