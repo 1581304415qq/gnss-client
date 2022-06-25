@@ -127,17 +127,21 @@ class SettingViewModel : ViewModel() {
 
     private val _ntrip = NtripServer()
     val ntrip = mutableStateOf(_ntrip)
+    val ntripIP = mutableStateOf(0u)
+    val ntripPort = mutableStateOf<UShort>(0u)
     fun performWriteNtripConfig() {
         viewModelScope.launch {
             val res = Repository.writeNtripConfig(_ntrip)
-            Log.i(TAG, "read server res ${res}")
+            Log.i(TAG, "read ntrip res ${res}")
         }
     }
 
     fun performReadNtripConfig() {
         viewModelScope.launch {
             val res = Repository.readNtripConfig(_ntrip)
-            Log.i(TAG, "read server res ${res}")
+            ntripIP.value=res.server.ip
+            ntripPort.value=res.server.port
+            Log.i(TAG, "read ntrip res id:${res.server.id} ip:${res.server.ip} port:${res.server.port}")
         }
     }
 

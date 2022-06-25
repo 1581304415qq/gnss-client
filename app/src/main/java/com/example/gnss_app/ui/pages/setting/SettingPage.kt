@@ -63,17 +63,28 @@ fun IPTextField(
 ) {
     val ip by remember { _ip }
     val port by remember { _port }
-    var ip1 =""
-    var ip2 =""
-    var ip3 =""
-    var ip4 =""
-    var tmpPort =""
-    Box(
+    var ip1 by remember {
+     mutableStateOf("")
+    }
+    var ip2 by remember {
+        mutableStateOf("")
+    }
+    var ip3 by remember {
+        mutableStateOf("")
+    }
+    var ip4 by remember {
+        mutableStateOf("")
+    }
+    var tmpPort by remember {
+        mutableStateOf("")
+    }
+    Column(
         Modifier
             .fillMaxWidth()
-            .height(50.dp)
+            .height(80.dp)
             .padding(top = 5.dp, bottom = 5.dp)
     ) {
+        Text(text = "${ip.shr(24).toUByte()}.${ip.shr(16).toUByte()}.${ip.shr(8).toUByte()}.${ip.toUByte()}:${port}")
         Row {
             Text(
                 style = MyTypography.body2,
@@ -85,7 +96,7 @@ fun IPTextField(
                     .width(50.dp)
                     .absolutePadding(right = 5.dp)
                     .background(TextInputBackGroundColor, MyShapes.small),
-                value = ip.shr(24).toByte().toShort().toString(),
+                value = ip1,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number
                 ),
@@ -102,7 +113,7 @@ fun IPTextField(
                     .width(50.dp)
                     .absolutePadding(right = 5.dp)
                     .background(TextInputBackGroundColor, MyShapes.small),
-                value = ip.shr(16).toByte().toShort().toString(),
+                value = ip2,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number
                 ),
@@ -119,7 +130,7 @@ fun IPTextField(
                     .width(50.dp)
                     .absolutePadding(right = 5.dp)
                     .background(TextInputBackGroundColor, MyShapes.small),
-                value = ip.shr(8).toByte().toShort().toString(),
+                value = ip3,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number
                 ),
@@ -136,7 +147,7 @@ fun IPTextField(
                     .width(50.dp)
                     .absolutePadding(right = 5.dp)
                     .background(TextInputBackGroundColor, MyShapes.small),
-                value = ip.toByte().toShort().toString(),
+                value = ip4,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number
                 ),
@@ -153,7 +164,7 @@ fun IPTextField(
                     .width(50.dp)
                     .absolutePadding(right = 5.dp)
                     .background(TextInputBackGroundColor, MyShapes.small),
-                value = port.toString(),
+                value = tmpPort,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number
                 ),
@@ -293,7 +304,7 @@ fun NtripConfig(
     ) {
         Text(text = "ntrip")
         // ip设置
-        IPTextField(viewModel.socketIP, viewModel.socketPort) {
+        IPTextField(viewModel.ntripIP, viewModel.ntripPort) {
             if (it != null) {
                 viewModel.ntrip.value.server.ip = it.first
                 viewModel.ntrip.value.server.port = it.second

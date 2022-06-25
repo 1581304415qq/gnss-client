@@ -7,6 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -46,12 +47,13 @@ fun BluetoothPage(navController: NavController, viewModel: BluetoothViewModel) {
                     toastShow(context, "bluetooth page", "select $it")
                 }
             else {
+                Box(Modifier.height(100.dp)){
                 Button(onClick = {
                     viewModel.disconnectDevice()
                     viewModel.setStatus(BLE_CONNECT_STATUS.DISCONNECT)
                 }) {
                     Text("断开连接")
-                }
+                }}
             }
             if (btIsEnable.value) {
                 Scan {
