@@ -1,5 +1,6 @@
 package com.example.gnss_app.ble.model
 
+import android.util.Log
 import com.example.gnss_app.network.util.*
 import com.example.gnss_app.protocol.Data
 
@@ -90,20 +91,23 @@ sealed class DeviceConfig : Data() {
     class HostAddress() : DeviceConfig() {
         private var _id: Int = 0
         var id: Int
-            get() = body?.readInt8()?.toInt() ?: 0
+            get() = body?.readUInt8()?.toInt() ?: 0
             set(value) {
                 _id = value
             }
         private var _ip: UInt = 0u
         var ip: UInt
-            get() = body?.readUInt(1) ?: 0u
+            get() = body?.readUInt32(1) ?: 0u
             set(value) {
                 _ip = value
             }
 
         private var _port: UShort = 0u
         var port: UShort
-            get() = body?.readInt16LB(5) ?: 0u
+            get() {
+                Log.i("","${body!![6].toUByte()*256u + body!![5].toUByte()}")
+                return body?.readUInt16LB(5) ?: 0u
+            }
             set(value) {
                 _port = value
             }

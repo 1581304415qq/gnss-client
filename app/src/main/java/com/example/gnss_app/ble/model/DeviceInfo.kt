@@ -1,13 +1,13 @@
 package com.example.gnss_app.ble.model
 
-import com.example.gnss_app.network.util.readUInt
+import com.example.gnss_app.network.util.readUInt32
 import com.example.gnss_app.protocol.Data
 
 sealed class DeviceInfo : Data() {
 
     class AppInfo() : DeviceInfo() {
         val appVersion: UInt
-            get() = body?.readUInt() ?: 0u
+            get() = body?.readUInt32() ?: 0u
 
         val info: String
             get() = if (body == null) "" else String(body!!)
@@ -15,7 +15,7 @@ sealed class DeviceInfo : Data() {
 
     class CSQ() : DeviceInfo() {
         val rssi: Int
-            get() = body?.readUInt()?.toInt() ?: 0
+            get() = body?.readUInt32()?.toInt() ?: 0
     }
 
     /**

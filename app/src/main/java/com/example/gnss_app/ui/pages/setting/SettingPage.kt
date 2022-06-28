@@ -97,7 +97,6 @@ fun IPTextField(
             )
             BasicTextField(
                 modifier = Modifier
-
                     .width(50.dp)
                     .absolutePadding(right = 5.dp)
                     .background(TextInputBackGroundColor, MyShapes.small),
@@ -238,6 +237,9 @@ fun GpsConfig(
 fun SocketConfig(
     viewModel: SettingViewModel = SettingViewModel()
 ) {
+    val switchState by remember {
+        viewModel.socketState
+    }
     Column(
         Modifier
             .fillMaxWidth()
@@ -285,7 +287,7 @@ fun SocketConfig(
                 }
             ) {
                 Text(
-                    text = "开关",
+                    text = if (switchState) "打开" else "关闭",
                     fontSize = 15.sp
                 )
             }
@@ -302,6 +304,9 @@ fun NtripConfig(
     var passwd by remember { viewModel.ntripPasswd}
     var mount by remember { viewModel.ntripMount }
 
+    val switchState by remember {
+        viewModel.ntripState
+    }
     Column(
         Modifier
             .fillMaxWidth()
@@ -392,7 +397,7 @@ fun NtripConfig(
                 }
             ) {
                 Text(
-                    text = "开关",
+                    text = if (switchState) "打开" else "关闭",
                     fontSize = 15.sp
                 )
             }

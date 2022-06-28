@@ -1,7 +1,7 @@
 package com.example.gnss_app.ble.model
 
 import com.example.gnss_app.network.util.readInt16
-import com.example.gnss_app.network.util.readUInt
+import com.example.gnss_app.network.util.readUInt32
 import com.example.gnss_app.network.util.toByteArray
 import com.example.gnss_app.protocol.Data
 
@@ -76,7 +76,7 @@ sealed class ControlDevice : Data() {
     class ADC() : ControlDevice() {
         var id: Int = 0;
         val value: UInt?
-            get() = body?.readUInt()
+            get() = body?.readUInt32()
 
         override fun toByteArray(): ByteArray? {
             return byteArrayOf(id.toByte())

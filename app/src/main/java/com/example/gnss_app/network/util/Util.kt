@@ -49,7 +49,7 @@ fun ByteArray.findFirst(sequence: ByteArray, startFrom: Int = 0): Int {
     return -1
 }
 
-fun UByteArray.readInt8(startFrom: Int = 0): UInt {
+fun UByteArray.readUInt8(startFrom: Int = 0): UInt {
     return this[startFrom].toUInt()
 }
 
@@ -57,11 +57,11 @@ fun ByteArray.readInt16(startFrom: Int = 0): UInt {
     return this[startFrom].toUInt().shl(8) or this[startFrom + 1].toUInt()
 }
 
-fun ByteArray.readInt16LB(startFrom: Int = 0): UShort {
-    return (this[startFrom].toUInt() or this[startFrom + 1].toUInt().shl(8)).toUShort()
+fun ByteArray.readUInt16LB(startFrom: Int = 0): UShort {
+    return (this[startFrom].toUByte() + this[startFrom + 1].toUByte() * 256u).toUShort()
 }
 
-fun UByteArray.readUInt(startFrom: Int = 0): UInt {
+fun UByteArray.readUInt32(startFrom: Int = 0): UInt {
     var rs = 0u
     for (i in startFrom..startFrom + 3) {
         rs = rs shl 8 or this[i].toUInt()
@@ -69,14 +69,14 @@ fun UByteArray.readUInt(startFrom: Int = 0): UInt {
     return rs
 }
 
-fun ByteArray.readInt8(startFrom: Int = 0): UInt {
-    return this[startFrom].toUInt()
+fun ByteArray.readUInt8(startFrom: Int = 0): UInt {
+    return this[startFrom].toUByte().toUInt()
 }
 
-fun ByteArray.readUInt(startFrom: Int = 0): UInt {
+fun ByteArray.readUInt32(startFrom: Int = 0): UInt {
     var rs = 0u
     for (i in startFrom..startFrom + 3) {
-        rs = rs shl 8 or this[i].toUInt()
+        rs = rs * 256u + this[i].toUByte()
     }
     return rs
 }
@@ -84,12 +84,13 @@ fun ByteArray.readUInt(startFrom: Int = 0): UInt {
 fun ByteArray.readUIntLB(startFrom: Int = 0): UInt {
     var rs = 0u
     for (i in startFrom..startFrom + 3) {
-        rs = rs or this[i].toUInt().shl((i - startFrom) * 8)
+//        rs = rs or this[i].toUInt().shl((i - startFrom) * 8)
+        rs = rs or this[i].toUByte() * (i - startFrom).toUInt() * 256u
     }
     return rs
 }
 
-fun UShort.toLB(): UShort = ((this.toInt() and 0x00FF).shl(8) or this.toInt().shr(8)).toUShort()
+fun UShort.toLB(): UShort = ((this.toUInt() and 0x00FFu).shl(8) or this.toUInt().shr(8)).toUShort()
 fun UInt.toLB(): UInt =
     this.shl(8 * 3) or (this and 65280u).shl(8) or (this and 16711680u).shr(8) or this.shr(8 * 3)
 
@@ -101,6 +102,7 @@ fun UInt.toByteArray(): ByteArray {
     }
     return ar
 }
+
 fun Int.toByteArray(): ByteArray {
     val ar = ByteArray(4)
     val offset: Int = 255

@@ -19,13 +19,15 @@ import java.util.*
  * 只与ble设备通信。不负责数据的解析，打包。
  */
 
-@SuppressLint("MissingPermission")
+@SuppressLint("MissingPermission", "StaticFieldLeak")
 object BLE : EventDispatcher<BLE_EVENT_TYPE, BleEvent<*>>() {
     private const val TAG = "BlueTooth"
-    private const val SCAN_PERIOD = 3000L
+    private const val SCAN_PERIOD = 10000L
     private var scanning = false
     private var scanner: BluetoothLeScanner? = null
     private var bluetoothAdapter: BluetoothAdapter? = null
+    var myDevice: BluetoothDevice? = null
+    var myContext: Context? = null
 
     var isConnected = false
     var state: STATUS = STATUS.UNABLE
@@ -196,10 +198,15 @@ object BLE : EventDispatcher<BLE_EVENT_TYPE, BleEvent<*>>() {
         serviceUUID: String,
         characteristicUUID: String
     ): BluetoothGattCharacteristic {
-        if (bluetoothGatt == null)
-            throw Error("bluetoothGatt is null")
+        if (bluetoothGatt == null) {
+            connect()
+//            throw Error("bluetoothGatt is null")
+        }
         val service = bluetoothGatt!!.getService(uuid(serviceUUID))
-            ?: throw Error("bluetoothService is null")
+        if (service == null) {
+            bluetoothGatt!!.discoverServices()
+            //throw Error("bluetoothService is null")
+        }
         return service.getCharacteristic(uuid(characteristicUUID))
             ?: throw Error("bluetoothGatt is null")
     }
@@ -214,6 +221,11 @@ object BLE : EventDispatcher<BLE_EVENT_TYPE, BleEvent<*>>() {
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .build()
         devices.clear()
+
+        if (bluetoothGatt != null) {
+            bluetoothGatt!!.disconnect()
+            bluetoothGatt!!.close()
+        }
         if (bluetoothAdapter.isEnabled) {
             log(msg = "start scan")
             val scanner = bluetoothAdapter.bluetoothLeScanner
@@ -249,8 +261,20 @@ object BLE : EventDispatcher<BLE_EVENT_TYPE, BleEvent<*>>() {
 
     fun uuid(uuid: String): UUID = UUID.fromString(uuid)
 
+    private fun connect() {
+
+        if (bluetoothGatt != null) {
+            bluetoothGatt!!.disconnect()
+            bluetoothGatt!!.close()
+        }
+        if (myDevice != null && myContext != null)
+            myDevice!!.connectGatt(myContext, false, gattCallback)
+    }
+
     fun connect(context: Context, device: BluetoothDevice) {
-        device.connectGatt(context, false, gattCallback)
+        myDevice = device
+        myContext = context
+        connect()
     }
 
     fun disconnect() {

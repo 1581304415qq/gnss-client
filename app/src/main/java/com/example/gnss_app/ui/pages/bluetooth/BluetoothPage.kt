@@ -47,13 +47,14 @@ fun BluetoothPage(navController: NavController, viewModel: BluetoothViewModel) {
                     toastShow(context, "bluetooth page", "select $it")
                 }
             else {
-                Box(Modifier.height(100.dp)){
-                Button(onClick = {
-                    viewModel.disconnectDevice()
-                    viewModel.setStatus(BLE_CONNECT_STATUS.DISCONNECT)
-                }) {
-                    Text("断开连接")
-                }}
+                Box(Modifier.height(100.dp)) {
+                    Button(onClick = {
+                        viewModel.disconnectDevice()
+                        viewModel.setStatus(BLE_CONNECT_STATUS.DISCONNECT)
+                    }) {
+                        Text("断开连接")
+                    }
+                }
             }
             if (btIsEnable.value) {
                 Scan {
@@ -91,7 +92,7 @@ fun OpenBlueTooth(callBack: (b: Boolean) -> Unit) {
 }
 
 @Composable
-fun Scan(function: (cb:()->Unit) -> Unit) {
+fun Scan(function: (cb: () -> Unit) -> Unit) {
     var stopCircular by remember { mutableStateOf(true) }
     var progress by remember { mutableStateOf(0.1f) }
     val animatedProgress = animateFloatAsState(
@@ -101,7 +102,7 @@ fun Scan(function: (cb:()->Unit) -> Unit) {
     if (!stopCircular)
         CircularProgressIndicator()
     Button(onClick = {
-        function{
+        function {
             stopCircular = true
         }
         stopCircular = false
@@ -126,16 +127,21 @@ fun Connect(list: LiveData<List<String>>, function: (i: Int) -> Unit) {
             Text(text = "连接")
         }
         DropdownMenu(
+            modifier = Modifier.fillMaxWidth(),
             expanded = expanded,
             onDismissRequest = {
                 expanded = false
             }) {
             list.value?.forEachIndexed { index, s ->
-                DropdownMenuItem(onClick = {
-                    function(index)
-                    expanded = false
-                }) {
-                    Icon(imageVector = Icons.Default.Favorite, contentDescription = "")
+                DropdownMenuItem(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        function(index)
+                        expanded = false
+                    }) {
+                    if (s.indexOf("Castor_BT") > -1) {
+                        Icon(imageVector = Icons.Default.Favorite, contentDescription = "")
+                    }
                     Text(text = s, modifier = Modifier.padding(start = 10.dp))
                 }
             }

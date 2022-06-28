@@ -101,9 +101,10 @@ class SettingViewModel : ViewModel() {
     private val _socketState = SocketSwitch()
     val socketState = mutableStateOf(false)
     fun performOpenCloseSocket() {
-        _socketState.value = if (gnssState.value) 0 else 1
+        _socketState.value = if (!socketState.value) 0 else 1
         viewModelScope.launch {
             val res = Repository.writeServerState(_socketState)
+            socketState.value = !socketState.value
             Log.i(TAG, "write server res ${res}")
         }
     }

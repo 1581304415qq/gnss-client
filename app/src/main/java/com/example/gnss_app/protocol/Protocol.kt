@@ -99,7 +99,7 @@ open class Protocol : IProtocol {
         if (ba.size < (op + HEAD_LENGTH))
             return false
         with(head) {
-            service = ba.readInt16LB(op + 3)
+            service = ba.readUInt16LB(op + 3)
             dataLength = ba.readUIntLB(op + 5)
         }
         watchHead(head)
