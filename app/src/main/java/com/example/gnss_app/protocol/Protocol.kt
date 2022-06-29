@@ -100,7 +100,7 @@ open class Protocol : IProtocol {
             return false
         with(head) {
             service = ba.readUInt16LB(op + 3)
-            dataLength = ba.readUIntLB(op + 5)
+            dataLength = ba.toUByteArray().readUIntLB(op + 5)
         }
         watchHead(head)
         return true

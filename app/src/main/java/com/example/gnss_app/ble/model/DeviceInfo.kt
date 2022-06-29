@@ -55,7 +55,7 @@ sealed class DeviceInfo : Data() {
         val value: Int
             get() = if (body == null || body!!.size<2)
                 -1
-            else body?.readUIntLB(1)?.toInt() ?: 0
+            else body?.toUByteArray()?.readUIntLB(1)?.toInt() ?: 0
 
 
         override fun toByteArray(): ByteArray? {
