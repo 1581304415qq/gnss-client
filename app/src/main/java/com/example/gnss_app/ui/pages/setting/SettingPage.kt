@@ -661,7 +661,7 @@ fun ADC(
             BasicTextField(
                 modifier = Modifier
                     .height(40.dp)
-                    .width(120.dp)
+                    .width(40.dp)
                     .absolutePadding(right = 5.dp)
                     .background(TextInputBackGroundColor, MyShapes.small),
                 singleLine = true,
