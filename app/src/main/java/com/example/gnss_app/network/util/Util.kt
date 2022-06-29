@@ -84,8 +84,7 @@ fun ByteArray.readUInt32(startFrom: Int = 0): UInt {
 fun ByteArray.readUIntLB(startFrom: Int = 0): UInt {
     var rs = 0u
     for (i in startFrom..startFrom + 3) {
-//        rs = rs or this[i].toUInt().shl((i - startFrom) * 8)
-        rs = rs or this[i].toUByte() * (i - startFrom).toUInt() * 256u
+        rs = rs or this[i].toUInt().shl((i - startFrom) * 8)
     }
     return rs
 }

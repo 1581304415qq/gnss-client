@@ -7,12 +7,21 @@ import androidx.lifecycle.viewModelScope
 import com.example.gnss_app.ble.model.ControlDevice.*
 import com.example.gnss_app.ble.model.DeviceConfig.*
 import com.example.gnss_app.ble.model.DeviceInfo.*
+import com.example.gnss_app.ble.repository.EventType
 import com.example.gnss_app.ble.repository.Repository
 import com.viva.libs.utils.Log
 import kotlinx.coroutines.launch
 
 class SettingViewModel : ViewModel() {
     val TAG = "SettingViewModel"
+
+    init {
+        Repository.on(EventType.ON_NTRIP_STATE) {
+            // TODO
+            _ntripState.body = it.data
+        }
+    }
+
     private val _appInfo = AppInfo()
     val appInfo = mutableStateOf("")
     fun performGetAppInfo() {
@@ -75,6 +84,24 @@ class SettingViewModel : ViewModel() {
             _netMode.value = value.toInt()
             val res = Repository.writeNetMode(_netMode)
             Log.i(TAG, "write netmode res ${res.result}")
+        }
+    }
+
+    val ipMode = mutableStateOf("")
+    private val _ipMode = Mode()
+    fun performReadIPModeConfig() {
+        viewModelScope.launch {
+            val res = Repository.readIPMode(_ipMode)
+            ipMode.value = res.value.toString()
+            Log.i(TAG, "read ipmode res ${res.value}")
+        }
+    }
+
+    fun performWriteIPModeConfig(value: String) {
+        viewModelScope.launch {
+            _ipMode.value = value.toInt()
+            val res = Repository.writeIPMode(_ipMode)
+            Log.i(TAG, "write ipmode res ${res}")
         }
     }
 
@@ -157,8 +184,9 @@ class SettingViewModel : ViewModel() {
         viewModelScope.launch {
             _ntripState.value = if (ntripState.value) 0 else 1
             val res = Repository.writeNtripState(_ntripState)
-            if (res.result > 0) ntripState.value = !ntripState.value
-            Log.i(TAG, "write gnss state res ${res.value}")
+//            if (res.result > 0)
+            ntripState.value = !ntripState.value
+            Log.i(TAG, "write ntrip state res ${res.value}")
         }
     }
 
@@ -166,6 +194,26 @@ class SettingViewModel : ViewModel() {
     fun performSaveConfig() {
         viewModelScope.launch {
             val res = Repository.saveConfig()
+        }
+    }
+
+    private val _debugState = State()
+    fun performOpenDebug() {
+        viewModelScope.launch {
+            val res = Repository.openDebug(_debugState)
+            _debugState.value = if (_debugState.value > 0) 0 else 11
+        }
+    }
+
+    private val _adcValue = ADCValue()
+    val adcID = mutableStateOf("")
+    val adcValue = mutableStateOf("")
+
+    fun performGetADCValue(id:String) {
+        viewModelScope.launch {
+            _adcValue.id = id.toInt().toByte()
+            val res = Repository.readADCValue(_adcValue)
+            adcValue.value = res.value.toString()
         }
     }
 }

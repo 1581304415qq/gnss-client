@@ -10,7 +10,7 @@ sealed class DeviceConfig : Data() {
     val result: Int
         get() = response!![0].toInt()
 
-    class WorkMode() : DeviceConfig() {
+    class Mode() : DeviceConfig() {
         private var _value: Int = -1
         var value: Int
             set(v) {

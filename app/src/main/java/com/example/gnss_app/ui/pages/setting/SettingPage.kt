@@ -37,14 +37,29 @@ fun SettingPage(navController: NavController, viewModel: SettingViewModel) {
             SysPasswd()
             Tel()
             NetModeConfig(viewModel)
+            IPModeConfig(viewModel)
+            ADC(viewModel)
             GpsConfig(viewModel)
+
+
 
             NtripConfig(viewModel)
             SocketConfig(viewModel)
-            Button(onClick = {
-                viewModel.performSaveConfig()
-            }) {
-                Text(text = "保存配置")
+            Row {
+                Button(modifier = Modifier
+                    .padding(end=2.dp),
+                    onClick = {
+                    viewModel.performSaveConfig()
+                }) {
+                    Text(text = "保存配置")
+                }
+                Button(modifier = Modifier
+                    .padding(end=2.dp),
+                    onClick = {
+                    viewModel.performOpenDebug()
+                }) {
+                    Text(text = "打开调试")
+                }
             }
         }
 
@@ -69,7 +84,7 @@ fun IPTextField(
     val ip by remember { _ip }
     val port by remember { _port }
     var ip1 by remember {
-     mutableStateOf("")
+        mutableStateOf("")
     }
     var ip2 by remember {
         mutableStateOf("")
@@ -89,7 +104,11 @@ fun IPTextField(
             .height(80.dp)
             .padding(top = 5.dp, bottom = 5.dp)
     ) {
-        Text(text = "${ip.shr(24).toUByte()}.${ip.shr(16).toUByte()}.${ip.shr(8).toUByte()}.${ip.toUByte()}:${port}")
+        Text(
+            text = "${ip.shr(24).toUByte()}.${ip.shr(16).toUByte()}.${
+                ip.shr(8).toUByte()
+            }.${ip.toUByte()}:${port}"
+        )
         Row {
             Text(
                 style = MyTypography.body2,
@@ -300,8 +319,8 @@ fun SocketConfig(
 fun NtripConfig(
     viewModel: SettingViewModel = SettingViewModel()
 ) {
-    var account by remember { viewModel.ntripAccount}
-    var passwd by remember { viewModel.ntripPasswd}
+    var account by remember { viewModel.ntripAccount }
+    var passwd by remember { viewModel.ntripPasswd }
     var mount by remember { viewModel.ntripMount }
 
     val switchState by remember {
@@ -415,7 +434,7 @@ fun NetModeConfig(
         viewModel.netMode
     }
     Column() {
-        Text("网络模式配置")
+        Text("在线模式配置")
         Row(
             Modifier
                 .height(60.dp)
@@ -453,6 +472,60 @@ fun NetModeConfig(
                 onClick = {
                     if (text != "")
                         viewModel.performWriteNetModeConfig(text)
+                }) {
+                Text(text = "配置")
+            }
+        }
+    }
+}
+
+@Composable
+fun IPModeConfig(
+    viewModel: SettingViewModel = SettingViewModel(),
+    modifier: Modifier = Modifier
+) {
+    var text by remember {
+        viewModel.ipMode
+    }
+    Column() {
+        Text("连接模式配置")
+        Row(
+            Modifier
+                .height(60.dp)
+                .padding(top = 10.dp, bottom = 10.dp)
+        ) {
+            BasicTextField(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(50.dp)
+                    .absolutePadding(right = 5.dp)
+                    .background(TextInputBackGroundColor, MyShapes.small),
+                value = text,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number
+                ),
+                onValueChange = { newText ->
+                    if (newText.length <= 2) {
+                        text = newText.filter { it.isDigit() }
+                    }
+                },
+                singleLine = true,
+                textStyle = MyTypography.body2
+            )
+            Button(
+                modifier = Modifier
+                    .absolutePadding(right = 5.dp),
+                onClick = {
+                    viewModel.performReadIPModeConfig()
+                }) {
+                Text(text = "读取")
+            }
+            Button(
+                modifier = Modifier
+                    .absolutePadding(right = 5.dp),
+                onClick = {
+                    if (text != "")
+                        viewModel.performWriteIPModeConfig(text)
                 }) {
                 Text(text = "配置")
             }
@@ -570,6 +643,55 @@ fun Tel(
         }
     }
 }
+
+@Composable
+fun ADC(
+    viewModel: SettingViewModel = SettingViewModel()
+) {
+    var id by remember {
+        viewModel.adcID
+    }
+    val value by remember {
+        viewModel.adcValue
+    }
+    Column() {
+        Text(text = "ADC")
+
+        Row() {
+            BasicTextField(
+                modifier = Modifier
+                    .height(40.dp)
+                    .width(120.dp)
+                    .absolutePadding(right = 5.dp)
+                    .background(TextInputBackGroundColor, MyShapes.small),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number
+                ),
+                value = id,
+                onValueChange = { text ->
+                    id=text.filter { it.isDigit() }
+                })
+            Text(
+                modifier = Modifier
+                    .height(40.dp)
+                    .width(120.dp)
+                    .absolutePadding(right = 5.dp)
+                    .background(TextInputBackGroundColor, MyShapes.small),
+                text = value
+            )
+            Button(modifier = Modifier
+                .padding(end = 5.dp),
+                onClick = {
+                    if (id!="")
+                    viewModel.performGetADCValue(id)
+                }) {
+                Text(text = "读取")
+            }
+        }
+    }
+}
+
 
 @Preview
 @Composable

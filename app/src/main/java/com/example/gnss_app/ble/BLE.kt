@@ -197,18 +197,25 @@ object BLE : EventDispatcher<BLE_EVENT_TYPE, BleEvent<*>>() {
     fun getCharacteristic(
         serviceUUID: String,
         characteristicUUID: String
-    ): BluetoothGattCharacteristic {
+    ): BluetoothGattCharacteristic? {
         if (bluetoothGatt == null) {
             connect()
+            return null
 //            throw Error("bluetoothGatt is null")
         }
         val service = bluetoothGatt!!.getService(uuid(serviceUUID))
         if (service == null) {
             bluetoothGatt!!.discoverServices()
+            return null
             //throw Error("bluetoothService is null")
         }
-        return service.getCharacteristic(uuid(characteristicUUID))
-            ?: throw Error("bluetoothGatt is null")
+        val characteristic = service.getCharacteristic(uuid(characteristicUUID))
+        if (characteristic == null) {
+            bluetoothGatt!!.discoverServices()
+            return null
+//            throw Error("bluetoothGatt is null")
+        }
+        return characteristic
     }
 
     fun startScan(bluetoothAdapter: BluetoothAdapter): Boolean {

@@ -1,6 +1,7 @@
 package com.example.gnss_app.ble.repository
 
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.le.ScanResult
 import android.content.Context
 import com.example.gnss_app.ble.BLE
@@ -96,11 +97,13 @@ object Repository : EventDispatcher<EventType, Event>() {
     }
 
     private fun sendMsg(service: UShort, data: IData) {
-        val characteristic = BLE.getCharacteristic(CASTOR_BT_SERVICE_UUID, CASTOR_BT_WRITE_UUID)
-        BLE.write(
-            characteristic,
-            protocol.encode(service, data)
-        )
+        val characteristic: BluetoothGattCharacteristic? =
+            BLE.getCharacteristic(CASTOR_BT_SERVICE_UUID, CASTOR_BT_WRITE_UUID)
+        if (characteristic != null)
+            BLE.write(
+                characteristic,
+                protocol.encode(service, data)
+            )
     }
 
     private fun startHeart() {
@@ -124,14 +127,17 @@ object Repository : EventDispatcher<EventType, Event>() {
     suspend fun connect(context: Context, id: Int): Boolean =
         suspendCoroutine {
             BLE.once(BLE_EVENT_TYPE.ON_CONNECT) { event ->
-                when (event) {
-                    is BleEvent.Success -> {
-                        it.resume(true)
+                try {
+                    when (event) {
+                        is BleEvent.Success -> {
+                            it.resume(true)
+                        }
+                        is BleEvent.Error -> {
+                            it.resume(false)
+                        }
+                        else -> {}
                     }
-                    is BleEvent.Error -> {
-                        it.resume(false)
-                    }
-                    else -> {}
+                } catch (e: Exception) {
                 }
             }
 
@@ -206,7 +212,7 @@ object Repository : EventDispatcher<EventType, Event>() {
             sendMsg(ProtocolID.SERVICE_W_NETMOD, data)
         }
 
-    suspend fun readIPMode(data: NetMode): NetMode =
+    suspend fun readIPMode(data: Mode): Mode =
         suspendCoroutine {
             once(EventType.ON_R_IPMOD_CONFIG) { e ->
                 try {
@@ -223,19 +229,18 @@ object Repository : EventDispatcher<EventType, Event>() {
             sendMsg(ProtocolID.SERVICE_R_IPMOD, data)
         }
 
-    suspend fun writeIPMode(data: NetMode): NetMode =
+    suspend fun writeIPMode(data: Mode): Boolean =
         suspendCoroutine {
             once(EventType.ON_W_IPMOD_CONFIG) { e ->
                 try {
                     when (e) {
                         is Event.Success -> {
                             data.response = e.data
-                            it.resume(data)
+                            it.resume(data.result > 0)
                         }
                         is Event.Error -> {}
                     }
                 } catch (e: Exception) {
-
                 }
             }
             sendMsg(ProtocolID.SERVICE_W_IPMOD, data)
@@ -362,7 +367,7 @@ object Repository : EventDispatcher<EventType, Event>() {
         }
 
 
-    suspend fun readWorkMode(data: WorkMode): WorkMode =
+    suspend fun readWorkMode(data: Mode): Mode =
         suspendCoroutine {
             try {
                 once(EventType.ON_R_WKMODE_CONFIG) { e ->
@@ -669,7 +674,6 @@ object Repository : EventDispatcher<EventType, Event>() {
                 }
                 sendMsg(ProtocolID.SERVICE_NTRIP_SWITCH, data)
             } catch (e: Exception) {
-
             }
         }
 
@@ -733,10 +737,32 @@ object Repository : EventDispatcher<EventType, Event>() {
                         is Event.Error -> {}
                     }
                     it.resume(String(e.data!!))
-                } catch (e: Exception) { }
+                } catch (e: Exception) {
+                }
 
             }
             sendMsg(ProtocolID.SERVICE_READ_CONFIG, castorConfig)
+        }
+
+    suspend fun readADCValue(adcValue: ADCValue): ADCValue =
+        suspendCoroutine {
+            once(EventType.ON_ADC) { e ->
+                try {
+                    when (e) {
+                        is Event.Success -> {
+                            // 提交错误，无返回
+                            if (e.data!!.isEmpty())
+                                adcValue.body = null
+                            else
+                                adcValue.body = e.data
+                            it.resume(adcValue)
+                        }
+                        is Event.Error -> {}
+                    }
+                } catch (e: Exception) {
+                }
+            }
+            sendMsg(ProtocolID.SERVICE_ADC, adcValue)
         }
 
     suspend fun saveConfig(): Boolean =
@@ -754,6 +780,23 @@ object Repository : EventDispatcher<EventType, Event>() {
                 }
             }
             sendMsg(ProtocolID.SERVICE_SAVE_CONFIG, BaseStringData())
+        }
+
+    suspend fun openDebug(data: State): Boolean =
+        suspendCoroutine {
+            once(EventType.ON_DEBUG_UART_OUT_ENABLE) { e ->
+                try {
+                    when (e) {
+                        is Event.Success -> {
+                            it.resume(e.data!![0] > 0)
+                        }
+                        is Event.Error -> {}
+                    }
+                } catch (e: Exception) {
+
+                }
+            }
+            sendMsg(ProtocolID.SERVICE_DEBUG_UART_OUT_ENABLE, data)
         }
 
     private fun dispatchEvent(frame: Frame<Protocol.ProtocolHead>) {
@@ -794,6 +837,10 @@ object Repository : EventDispatcher<EventType, Event>() {
 
             ProtocolID.SERVICE_SAVE_CONFIG -> EventType.ON_SAVE_CONFIG
             ProtocolID.SERVICE_SOCKET_SWITCH -> EventType.ON_SOCKET_SWITCH
+            ProtocolID.SERVICE_NTRIP_SWITCH -> EventType.ON_NTRIP_SWITCH
+            ProtocolID.SERVICE_DEBUG_UART_OUT_ENABLE -> EventType.ON_DEBUG_UART_OUT_ENABLE
+            ProtocolID.SERVICE_NTRIP_STATE -> EventType.ON_NTRIP_STATE
+            ProtocolID.SERVICE_ADC -> EventType.ON_ADC
 
             else -> EventType.ON_NULL
         }

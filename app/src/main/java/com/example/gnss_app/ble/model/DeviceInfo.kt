@@ -1,6 +1,7 @@
 package com.example.gnss_app.ble.model
 
 import com.example.gnss_app.network.util.readUInt32
+import com.example.gnss_app.network.util.readUIntLB
 import com.example.gnss_app.protocol.Data
 
 sealed class DeviceInfo : Data() {
@@ -49,6 +50,18 @@ sealed class DeviceInfo : Data() {
             get() = if (body != null) String(body!!) else ""
     }
 
+    class ADCValue() : DeviceInfo() {
+        var id: Byte = 0
+        val value: Int
+            get() = if (body == null || body!!.size<2)
+                -1
+            else body?.readUIntLB(1)?.toInt() ?: 0
+
+
+        override fun toByteArray(): ByteArray? {
+            return byteArrayOf(id)
+        }
+    }
 
     override fun toByteArray(): ByteArray? = null
 }
